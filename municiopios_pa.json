@@ -1,13 +1,16 @@
-      {
-        "type": "Feature",
-        "geometry": {
-          "type": "Point",
-          "coordinates": [-1.72951, -48.8743]
-        },
-        "properties": {
-          "id": "1500107",
-              "name": "Abaetetuba",
-              "description": "Abaetetuba",
-              "uf": "Pará"
-        }
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {},
+      "geometry": {
+        "coordinates": [
+          -52.20695980051801,
+          -3.2112079361517516
+        ],
+        "type": "Point"
       }
+    }
+  ]
+}
