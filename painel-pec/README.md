@@ -50,4 +50,13 @@ docker compose -f compose.yaml up -d --build
 
 A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. O frontend lê o GeoJSON do repositório, sem download adicional.
 
-**Limites da POC:** filtros de versão e período não estão ligados ao backend nesta primeira fase, e os cartões de situação por recência da imagem de referência serão adicionados após a aprovação da cobertura básica. A lista de municípios sem transmissão é calculada a partir do GeoJSON completo, não apenas dos municípios presentes no cadastro CNES.
+## Filtros
+
+- **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
+- **Data inicial e final**: parâmetros opcionais `data_inicio` e `data_fim`, formato ISO `AAAA-MM-DD`. O filtro final é inclusivo no dia inteiro.
+- Os filtros afetam todos os indicadores de cobertura e o mapa; o campo Município é uma busca local na lista de pendências.
+- **Atenção à semântica temporal:** a view representa a **última transmissão consolidada**, não o histórico de todos os lotes. Um filtro de mês não indica necessariamente todos os municípios que enviaram naquele mês.
+
+A API aceita apenas consultas parametrizadas `SELECT`, com transação read-only e timeout SQL. O GeoJSON municipal continua sendo referência independente de cobertura total. Para manter a API saudável, a consulta de versões também tem timeout de 15 segundos.
+
+**Limites da POC:** o gráfico de rosca classifica municípios como mapeados/não mapeados, sem a estratificação de recência do mockup original. A busca local por município filtra a tabela de pendências, não o mapa nem os cartões. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
