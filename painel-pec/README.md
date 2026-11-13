@@ -59,4 +59,4 @@ A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. O 
 
 A API aceita apenas consultas parametrizadas `SELECT`, com transação read-only e timeout SQL. O GeoJSON municipal continua sendo referência independente de cobertura total. Para manter a API saudável, a consulta de versões também tem timeout de 15 segundos.
 
-**Limites da POC:** o gráfico de rosca classifica municípios como mapeados/não mapeados, sem a estratificação de recência do mockup original. A busca local por município filtra a tabela de pendências, não o mapa nem os cartões. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
+**Limites da POC:** o gráfico de rosca classifica municípios como mapeados/não mapeados, sem a estratificação de recência do mockup original. A seleção de município calcula uma cobertura de 0% ou 100% para um município (não é mais a taxa estadual); use Todos os municípios para a cobertura estadual. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
