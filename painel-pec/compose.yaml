@@ -1,0 +1,37 @@
+name: sespa-pec-dashboard-poc
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - ../PARA.geojson:/data/PARA.geojson:ro
+    environment:
+      GEOJSON_PATH: /data/PARA.geojson
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [poc]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  web:
+    build:
+      context: ..
+      dockerfile: painel-pec/frontend/Dockerfile
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-18090}:80"
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt: ["no-new-privileges:true"]
+    # A imagem oficial do Nginx precisa ajustar proprietários de diretórios
+    # temporários e iniciar workers com usuário menos privilegiado.
+    networks: [poc]
+networks:
+  poc:

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SUS">
+  <title>SUS - Sistema Único de Saúde</title>
+  <rect width="64" height="64" rx="12" fill="#0865ae"/>
+  <path d="M12 12h13v11h14V12h13v40H39V37H25v15H12z" fill="#fff"/>
+  <rect x="21" y="25" width="22" height="10" fill="#0865ae"/>
+  <path d="M8 30h48v8H8z" fill="#fff"/>
+  <text x="32" y="60" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="white">SUS</text>
+</svg>

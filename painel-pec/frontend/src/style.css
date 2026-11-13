@@ -1,0 +1,235 @@
+:root{font-family:Inter,Arial,sans-serif;color:#172b4c;background:#f8faff}*{box-sizing:border-box}body{margin:0;min-width:850px}.top{background:#294a76;color:white;padding:15px 28px;display:flex;justify-content:space-between;font-weight:600}.top small{opacity:.5}.top b{background:#587f91;border-radius:8px;padding:8px}main{max-width:1700px;margin:auto;padding:20px}.heading{display:flex;gap:18px;align-items:center}.heading h1{font-size:27px;margin:0 0 7px;color:#172844}.heading p{font-size:19px;margin:0;color:#42516b}.institution{margin-left:auto;font-weight:900;font-size:18px;color:#205991}.mark{font-size:40px;border:3px solid #2a86c7;border-radius:8px;padding:0 9px;color:#2877bc}.filters{border:1px solid #d9e4f1;background:white;border-radius:12px;margin:22px 0 16px;padding:14px 20px;display:flex;align-items:end;gap:22px}.filters label{font-weight:600;font-size:13px;display:flex;flex-direction:column;gap:6px;min-width:190px}.filters input,.filters select{border:1px solid #c8d4e2;border-radius:6px;padding:8px;background:white;min-width:210px}.filters button{border:1px solid #ccd5e2;background:white;padding:9px 14px;border-radius:7px;cursor:pointer}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.metrics article,.boards article{background:#fff;border:1px solid #cddcf2;border-radius:12px;padding:20px;box-shadow:0 1px 2px #cdd7e055}.metrics article:nth-child(2){background:#f4fcf6;border-color:#c5e5d0}.metrics article:nth-child(3){background:#fff8f8;border-color:#f4c8cc}.metrics article:nth-child(4){background:#f9f8ff;border-color:#ded6fa}.metrics h3{font-size:15px;margin:0 0 10px}.metrics strong{font-size:39px;display:block;color:#15345d}.metrics article:nth-child(3) strong{color:#ab202e}.metrics span{font-size:13px;color:#53657c}.progress{background:#d8d8e3;height:9px;border-radius:20px;margin:9px 0}.progress i{display:block;height:100%;background:#6856d9;border-radius:20px}.boards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.boards h2{font-size:18px;margin:0;color:#17365b}.boards .geo{display:flex;flex-direction:column;min-height:540px}.map-area{flex:1;min-height:420px}.map{width:100%;height:100%;min-height:420px}.geo footer{text-align:center;font-size:13px}.dot{display:inline-block;width:12px;height:12px;border-radius:3px}.green{background:#39a75a}.red{background:#e85d64}.right{display:grid;grid-template-rows:230px 1fr;gap:14px;min-height:540px}.right article{overflow:hidden}.donut{height:175px;width:100%}.table-wrap{overflow:auto;max-height:260px;margin-top:14px}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;background:#f2f5fc}td,th{padding:9px;border-bottom:1px solid #dbe4ee}.pill{background:#ffe6e8;color:#a4232d;padding:5px 9px;border-radius:15px}.foot{text-align:right;font-size:12px;color:#60718a}.warning,.error{margin:12px 0;padding:12px;border-radius:7px;background:#fff4d8;color:#785a11;border:1px solid #eac963}.error{background:#ffebed;color:#a22534}@media(max-width:1100px){.metrics{grid-template-columns:repeat(2,1fr)}.boards{grid-template-columns:1fr}.institution{display:none}.filters{flex-wrap:wrap}}
+
+/* Filtros e cabeçalho institucional */
+.top{letter-spacing:.2px;align-items:center}
+.top span:first-child{font-size:16px}
+.filters{flex-wrap:wrap;gap:12px 18px}
+.filters label{min-width:160px}
+.filters input,.filters select{min-width:170px;max-width:250px;height:38px;color:#17365b}
+.filters button{height:38px;white-space:nowrap}
+.filter-note{background:#eef5ff;border:1px solid #bfd4f1;color:#284972;border-radius:8px;padding:11px 14px;margin:10px 0;font-size:13px}
+
+/* Situação do município selecionado */
+.pill-ok{background:#dff5e7;color:#17683a}
+.filters select[aria-label="Selecionar município"]{min-width:230px;max-width:300px}
+
+/* Pesquisa de município: 144 opções, sem dependências externas */
+.municipio-picker{position:relative;min-width:250px;max-width:310px}
+.filters .municipio-picker input{width:100%;min-width:250px;max-width:310px;padding-right:34px}
+.municipio-clear{position:absolute;right:5px;top:4px;border:0!important;background:transparent!important;min-width:28px;padding:0 7px!important;font-size:21px;line-height:28px;color:#62738d;cursor:pointer;height:30px!important}
+.municipio-options{position:absolute;z-index:50;top:calc(100% + 4px);left:0;right:0;max-height:270px;overflow-y:auto;background:#fff;border:1px solid #c8d4e2;border-radius:7px;box-shadow:0 8px 20px #152f5240}
+.municipio-options button{display:block;width:100%;max-width:none;min-width:0;height:auto!important;text-align:left;border:0!important;border-radius:0!important;background:#fff!important;padding:9px 12px!important;font-size:14px;color:#172b4c;cursor:pointer;white-space:normal}
+.municipio-options button:hover,.municipio-options button[aria-selected=true]{background:#e9f1ff!important}
+.municipio-empty{padding:12px;color:#63758d;font-size:13px}
+
+/* Mapa cartográfico opcional (OpenStreetMap + polígonos municipais) */
+.map-header{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.map-switch{display:flex;gap:4px;padding:3px;background:#edf2f9;border:1px solid #cddcf2;border-radius:8px}
+.map-switch button{border:0;background:transparent;border-radius:5px;padding:7px 11px;color:#375475;cursor:pointer;font-size:12px;font-weight:600}
+.map-switch button.active{background:#fff;color:#174477;box-shadow:0 1px 5px #b7c4d2}
+.osm-map{width:100%;height:100%;min-height:420px;border-radius:8px;background:#e5edf2;z-index:0}
+.osm-map .leaflet-container{font-family:Inter,Arial,sans-serif}
+.osm-map .leaflet-control-attribution{font-size:10px}
+
+/* Pins estilo localização: município e estabelecimento de saúde */
+.pec-marker{background:transparent;border:none;cursor:pointer}
+.pec-marker svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 2px #1d2f4266)}
+.pec-marker-unit{z-index:1}
+.filters label:has(select[aria-label="Selecionar unidade de saúde"]){min-width:250px}
+.filters select[aria-label="Selecionar unidade de saúde"]{min-width:260px;max-width:340px;text-overflow:ellipsis}
+
+/* Busca estadual de estabelecimentos e vínculo bidirecional com município */
+.unidade-picker{min-width:275px;max-width:360px}
+.filters .unidade-picker input{min-width:275px;max-width:360px}
+.unidade-picker .municipio-options small{display:block;font-size:11px;color:#607a9b;margin-top:3px}
+
+/* Atualização visual: indicadores estaduais e recência de recebimento */
+.metrics article{display:flex;gap:14px;align-items:center;min-width:0;padding:19px 15px}
+.metrics article>div{flex:1;min-width:0}
+.metrics h3{font-size:14px;font-weight:750;margin-bottom:5px}
+.metrics strong{font-size:36px;line-height:1.12}
+.metrics .metric-icon{display:grid;place-items:center;flex:0 0 50px;height:50px;border-radius:13px;color:#fff;font-size:31px;font-weight:800;box-shadow:0 5px 13px #1c477522}
+.metrics .metric-total{background:linear-gradient(140deg,#fff,#eaf3ff);border-color:#bad8ff}
+.metric-total .metric-icon{background:linear-gradient(135deg,#45b2ff,#0876ed)}
+.metrics .metric-mapped{background:linear-gradient(140deg,#fff,#ecfaf0);border-color:#b9e7c9}
+.metric-mapped .metric-icon{background:linear-gradient(135deg,#36cc70,#079641)}
+.metrics .metric-missing{background:linear-gradient(140deg,#fff,#fff0f2);border-color:#ffc1ca}
+.metric-missing .metric-icon{background:linear-gradient(135deg,#ff7284,#d82b49)}
+.metrics .metric-coverage{background:linear-gradient(140deg,#fff,#f1edff);border-color:#d4c4ff}
+.metric-coverage .metric-icon{background:linear-gradient(135deg,#9d75ff,#6735da)}
+.metric-coverage .progress{margin:8px 0 4px}
+.metric-coverage .progress i{background:linear-gradient(90deg,#9664ff,#6339db)}
+.recency-panel{min-height:265px}
+.recency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:17px}
+.recency-card{display:flex;gap:10px;align-items:center;padding:13px;border:1px solid;border-radius:11px;min-width:0}
+.recency-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:10px;font-size:25px;font-weight:850;background:#fff}
+.recency-label{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.recency-label strong{font-size:13px;line-height:1.3}
+.recency-label small,.recency-count small{font-size:12px}
+.recency-count{border-left:1px solid currentColor;padding-left:12px;display:flex;flex-direction:column;align-items:flex-end;min-width:66px}
+.recency-count strong{font-size:27px;line-height:1.1}
+.recency-recent{background:#effbf2;border-color:#a5e0b5;color:#167739}
+.recency-attention{background:#fff9e9;border-color:#f6d27c;color:#946000}
+.recency-late{background:#fff1ed;border-color:#ffb69b;color:#b84123}
+.recency-none{background:#f3f5f8;border-color:#c7ced9;color:#4d586c}
+.filters .period-filter{min-width:205px}
+.filters .period-filter select{min-width:205px;background:#fff}
+.right{grid-template-rows:auto minmax(280px,1fr)}
+@media(max-width:1150px){.metrics article{padding:14px}.metrics .metric-icon{flex-basis:43px;height:43px}.metrics h3{font-size:12px}.metrics strong{font-size:31px}}
+@media(max-width:600px){.recency-grid{grid-template-columns:1fr}}
+
+/* Revisao de acessibilidade visual: tipografia, alinhamento e icones vetoriais */
+:root{font-size:16px}
+body{font-size:16px}
+.top{font-size:17px;padding:17px 28px}
+.top span:first-child{font-size:18px}
+.heading h1{font-size:31px}
+.heading p{font-size:20px}
+.filters label{font-size:15px;line-height:1.4}
+.filters input,.filters select,.filters button{font-size:15px;height:43px}
+.filters{gap:15px 19px}
+.filter-note,.warning,.error{font-size:15px;line-height:1.5}
+.boards h2{font-size:21px;line-height:1.32}
+.metrics article{display:flex;align-items:center;gap:15px;padding:20px 17px;min-height:132px}
+.metrics article>div{flex:1;min-width:0}
+.metrics h3{font-size:16px;line-height:1.3}
+.metrics strong{font-size:38px;line-height:1.1}
+.metrics span:not(.metric-icon){font-size:14px;line-height:1.4}
+.metrics .metric-icon,.recency-icon,.section-icon{display:flex;align-items:center;justify-content:center;line-height:0;padding:0;box-sizing:border-box}
+.metrics .metric-icon{width:56px;height:56px;flex:0 0 56px;border-radius:14px;overflow:hidden}
+.metrics .metric-icon svg,.recency-icon svg,.section-icon svg{display:block;flex:none;width:27px;height:27px;overflow:visible}
+.recency-icon{width:46px;height:46px;flex:0 0 46px;border-radius:12px;box-shadow:0 2px 8px #172b4c13}
+.recency-label strong{font-size:15px;line-height:1.35}
+.recency-label small,.recency-count small{font-size:13px}
+.recency-count strong{font-size:29px}
+.recency-card{gap:12px;padding:15px 13px}
+.section-heading{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-width:0}
+.section-icon{width:42px;height:42px;flex:0 0 42px;border-radius:12px;color:white;box-shadow:0 3px 10px #172b4c1b}
+.section-icon-map{background:linear-gradient(135deg,#39a8ff,#116cdb)}
+.section-icon-recency{background:linear-gradient(135deg,#8268fa,#553bd2)}
+.section-icon-alert{background:linear-gradient(135deg,#ff7e88,#d7354e)}
+.section-icon svg{width:25px;height:25px}
+.recency-grid{margin-top:5px}
+.table-wrap{max-height:340px;margin-top:12px;overflow:auto}
+.table-wrap table{min-width:680px;font-size:14px}
+.table-wrap th{font-size:14px;line-height:1.3;white-space:normal;position:sticky;top:0;z-index:1}
+.table-wrap td{font-size:14px;line-height:1.5;vertical-align:middle}
+.table-wrap th:nth-child(4),.table-wrap th:nth-child(5){min-width:110px}
+.pill{display:inline-flex;align-items:center;white-space:nowrap;font-weight:650}
+.no-data{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:5px 9px;background:#ffe6e8;border:1px solid #f5bec5;border-radius:999px;color:#a4232d;font-size:13px;font-weight:750}
+.geo footer,.foot{font-size:14px}
+.municipio-options button,.municipio-empty{font-size:15px}
+@media(max-width:1150px){.metrics h3{font-size:15px}.metrics strong{font-size:34px}.metrics .metric-icon{flex-basis:48px;width:48px;height:48px}}
+
+/* Ícones compactos dos três títulos de seção e fonte CNES no rodapé */
+.boards .section-icon{width:32px;height:32px;flex:0 0 32px;border-radius:9px}
+.boards .section-icon svg{width:19px;height:19px}
+.boards .section-heading{gap:9px}
+.foot a{color:#1767bd;text-decoration:underline;text-underline-offset:3px;font-weight:650}
+.foot a:hover{color:#0d457f}
+.foot a:focus-visible{outline:2px solid #1767bd;outline-offset:3px}
+
+/* Legibilidade dos filtros e separação entre cabeçalho territorial e mapa */
+.filters label{font-size:16px;line-height:1.45}
+.filters input,.filters select,.filters button{font-size:16px;line-height:1.35;min-height:45px}
+.filters .municipio-picker input,.filters .unidade-picker input{font-size:16px;min-height:45px}
+.municipio-options button,.municipio-empty{font-size:16px}
+.boards .geo .map-header{flex:0 0 auto;align-items:center;padding-bottom:18px;min-height:54px}
+.boards .geo .map-header .section-heading{margin:0;align-items:center;line-height:1.35}
+.boards .geo .map-area{min-height:420px;position:relative}
+
+/* Acoes de filtro compactas: tooltips nativos via title e foco por teclado */
+.filter-actions{display:flex;align-items:center;gap:10px;align-self:flex-end}
+.filters .filter-actions .filter-icon-button{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;display:inline-flex;align-items:center;justify-content:center;line-height:0;border:1px solid #bfd0e3;border-radius:9px;background:#fff;color:#1c5794;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.filters .filter-actions .filter-icon-button svg{display:block;width:22px;height:22px;flex:none}
+.filters .filter-actions .filter-icon-button:hover{background:#eaf3ff;border-color:#7db3ee;box-shadow:0 2px 6px #1b49741a}
+.filters .filter-actions .filter-icon-button:focus-visible{outline:3px solid #2679cb;outline-offset:2px}
+
+/* Alerta de ausencia de recebimento: neon vermelho discreto e acessivel */
+.municipality-table-panel .pill-no-receipt{background:#ffe9ed;border:1px solid #ee8395;color:#a21731;font-weight:750;box-shadow:0 0 0 rgba(226,40,70,0);animation:receipt-alert-pulse 2.8s ease-in-out infinite}
+@keyframes receipt-alert-pulse{
+  0%,100%{background:#ffe9ed;border-color:#ee8395;box-shadow:0 0 0 0 rgba(226,40,70,0)}
+  50%{background:#ffdce4;border-color:#e43b5b;box-shadow:0 0 8px 2px rgba(226,40,70,.35)}
+}
+@media(prefers-reduced-motion:reduce){.municipality-table-panel .pill-no-receipt{animation:none;box-shadow:0 0 0 1px rgba(226,40,70,.25)}}
+
+
+/* Layout responsivo: preserva desktop e evita rolagem horizontal da pagina */
+html{width:100%;max-width:100%;overflow-x:clip}
+body{min-width:0;width:100%;max-width:100%}
+#root{min-width:0;width:100%}
+main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.filters>*{min-width:0}
+.map-area,.osm-map{width:100%;min-width:0}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.table-wrap table{width:max(100%,680px)}
+.leaflet-popup-content{overflow-wrap:anywhere}
+
+/* Tablets: filtros em grade, indicadores em duas colunas, mapa acima dos detalhes */
+@media (max-width:1100px){
+  .top{gap:12px;flex-wrap:wrap}
+  .heading{align-items:flex-start}
+  .filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+  .filters label,.filters .period-filter{width:100%;max-width:none;min-width:0}
+  .filters input,.filters select,.filters .period-filter select{width:100%;max-width:none;min-width:0}
+  .municipio-picker,.unidade-picker{width:100%;max-width:none;min-width:0}
+  .filters .municipio-picker input,.filters .unidade-picker input{width:100%;max-width:none;min-width:0}
+  .filter-actions{justify-content:flex-end;align-self:end}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .boards{grid-template-columns:minmax(0,1fr)}
+  .right{min-width:0}
+}
+
+/* Celulares: leitura em coluna unica, controles de toque e mapa adaptado */
+@media (max-width:640px){
+  .top{padding:12px 16px;flex-direction:column;align-items:flex-start;gap:5px;font-size:13px;line-height:1.4}
+  .top span:first-child{font-size:16px}
+  .top span:last-child{font-size:13px;overflow-wrap:anywhere}
+  main{padding:16px 12px 26px}
+  .heading{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:start}
+  .heading .mark{font-size:25px;line-height:1.2;padding:3px 5px;border-width:2px}
+  .heading h1{font-size:clamp(20px,5.5vw,26px);line-height:1.2;overflow-wrap:anywhere}
+  .heading p{font-size:14px;line-height:1.45;margin-top:5px}
+  .heading .institution{display:none}
+  .filters{grid-template-columns:minmax(0,1fr);padding:14px;margin:16px 0;gap:12px;border-radius:12px}
+  .filters label,.filters .period-filter{font-size:15px;gap:5px}
+  .filters input,.filters select,.filters button{font-size:16px;min-height:46px}
+  .filters .municipio-picker input,.filters .unidade-picker input{font-size:16px;min-height:46px}
+  .municipio-options{max-height:min(45vh,290px)}
+  .filters .filter-actions{justify-content:flex-end;gap:12px}
+  .filters .filter-actions .filter-icon-button{width:48px;height:48px;min-width:48px;min-height:48px}
+  .filter-note,.warning,.error{font-size:14px;overflow-wrap:anywhere}
+  .metrics{grid-template-columns:minmax(0,1fr);gap:10px}
+  .metrics article{min-height:112px;padding:16px;gap:14px}
+  .metrics h3{font-size:15px}
+  .metrics strong{font-size:34px}
+  .metrics .metric-icon{width:50px;height:50px;flex:0 0 50px}
+  .boards{gap:12px;margin-top:14px}
+  .boards article{padding:14px}
+  .boards h2{font-size:17px;line-height:1.3}
+  .boards .section-heading{gap:9px}
+  .boards .geo{min-height:0}
+  .boards .geo .map-header{padding-bottom:12px;min-height:0}
+  .boards .geo .map-area{height:340px;min-height:340px;flex:0 0 auto}
+  .osm-map{height:340px;min-height:340px}
+  .geo footer{font-size:12px;line-height:1.6;margin-top:9px}
+  .right{display:grid;grid-template-rows:auto auto;gap:12px;min-height:0}
+  .recency-panel{min-height:0}
+  .recency-grid{grid-template-columns:minmax(0,1fr);gap:9px}
+  .recency-card{padding:11px;gap:10px}
+  .recency-label strong{font-size:14px}
+  .recency-count strong{font-size:26px}
+  .table-wrap{max-height:360px;margin-top:8px}
+  .table-wrap table{min-width:690px}
+  .table-wrap th,.table-wrap td{font-size:13px;padding:9px 10px}
+  .foot{text-align:left;font-size:12px;line-height:1.65;margin:18px 2px 0;overflow-wrap:anywhere}
+  .leaflet-popup-content{max-width:min(65vw,240px);font-size:13px}
+  .leaflet-control-attribution{max-width:75vw}
+}
+
+/* Telas muito estreitas: preservar espaco do mapa e legibilidade */
+@media (max-width:360px){
+  main{padding-left:10px;padding-right:10px}
+  .boards article{padding:11px}
+  .boards .geo .map-area,.osm-map{height:300px;min-height:300px}
+  .metrics article{gap:10px}
+}
