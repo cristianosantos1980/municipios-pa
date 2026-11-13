@@ -3,6 +3,7 @@ WORKDIR /app
 COPY painel-pec/frontend/package.json .
 RUN npm install --no-audit --no-fund
 COPY painel-pec/frontend/index.html .
+COPY painel-pec/frontend/favicon.svg ./public/favicon.svg
 COPY painel-pec/frontend/src ./src
 COPY PARA.geojson ./public/PARA.geojson
 RUN npm run build
