@@ -30,3 +30,10 @@
 .osm-map{width:100%;height:100%;min-height:420px;border-radius:8px;background:#e5edf2;z-index:0}
 .osm-map .leaflet-container{font-family:Inter,Arial,sans-serif}
 .osm-map .leaflet-control-attribution{font-size:10px}
+
+/* Pins estilo localização: município e estabelecimento de saúde */
+.pec-marker{background:transparent;border:none;cursor:pointer}
+.pec-marker svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 2px #1d2f4266)}
+.pec-marker-unit{z-index:1}
+.filters label:has(select[aria-label="Selecionar unidade de saúde"]){min-width:250px}
+.filters select[aria-label="Selecionar unidade de saúde"]{min-width:260px;max-width:340px;text-overflow:ellipsis}
