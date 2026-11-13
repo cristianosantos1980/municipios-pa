@@ -128,3 +128,12 @@ body{font-size:16px}
 .foot a{color:#1767bd;text-decoration:underline;text-underline-offset:3px;font-weight:650}
 .foot a:hover{color:#0d457f}
 .foot a:focus-visible{outline:2px solid #1767bd;outline-offset:3px}
+
+/* Legibilidade dos filtros e separação entre cabeçalho territorial e mapa */
+.filters label{font-size:16px;line-height:1.45}
+.filters input,.filters select,.filters button{font-size:16px;line-height:1.35;min-height:45px}
+.filters .municipio-picker input,.filters .unidade-picker input{font-size:16px;min-height:45px}
+.municipio-options button,.municipio-empty{font-size:16px}
+.boards .geo .map-header{flex:0 0 auto;align-items:center;padding-bottom:18px;min-height:54px}
+.boards .geo .map-header .section-heading{margin:0;align-items:center;line-height:1.35}
+.boards .geo .map-area{min-height:420px;position:relative}
