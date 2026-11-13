@@ -10,7 +10,7 @@ function MunicipioPesquisa({rows,value,onChange}){
   const [texto,setTexto]=useState('');
   const [aberto,setAberto]=useState(false);
   const selecionado=rows.find(r=>r.ibge===value);
-  useEffect(()=>{setTexto(selecionado?.municipio||'')},[value,selecionado?.municipio]);
+  useEffect(()=>{if(selecionado)setTexto(selecionado.municipio)},[value,selecionado?.municipio]);
   const opcoes=useMemo(()=>{
     const termo=normalizar(texto.trim());
     return termo?rows.filter(r=>normalizar(r.municipio).includes(termo)):rows;
