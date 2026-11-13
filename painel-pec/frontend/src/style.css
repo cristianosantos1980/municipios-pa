@@ -8,3 +8,7 @@
 .filters input,.filters select{min-width:170px;max-width:250px;height:38px;color:#17365b}
 .filters button{height:38px;white-space:nowrap}
 .filter-note{background:#eef5ff;border:1px solid #bfd4f1;color:#284972;border-radius:8px;padding:11px 14px;margin:10px 0;font-size:13px}
+
+/* Situação do município selecionado */
+.pill-ok{background:#dff5e7;color:#17683a}
+.filters select[aria-label="Selecionar município"]{min-width:230px;max-width:300px}
