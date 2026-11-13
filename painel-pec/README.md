@@ -76,10 +76,14 @@ Os filtros **Município** e **Unidade de Saúde** funcionam nos dois sentidos. �
 ## Filtros
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
-- **Data inicial e final**: parâmetros opcionais `data_inicio` e `data_fim`, formato ISO `AAAA-MM-DD`. O filtro final é inclusivo no dia inteiro.
+- **Data do Recebimento**: filtro único com Todo o período, últimos 7/30/90 dias ou período personalizado (datas inicial e final). A API continua recebendo `data_inicio` e `data_fim` no formato ISO `AAAA-MM-DD`; a data final é inclusiva. A referência temporal disponível na view é `ultima_transmissao`, que representa o último recebimento consolidado, não o histórico de eventos.
 - Os filtros afetam todos os indicadores de cobertura e o mapa; o campo Município é uma busca local na lista de pendências.
 - **Atenção à semântica temporal:** a view representa a **última transmissão consolidada**, não o histórico de todos os lotes. Um filtro de mês não indica necessariamente todos os municípios que enviaram naquele mês.
 
 A API aceita apenas consultas parametrizadas `SELECT`, com transação read-only e timeout SQL. O GeoJSON municipal continua sendo referência independente de cobertura total. Para manter a API saudável, a consulta de versões também tem timeout de 15 segundos.
 
-**Limites da POC:** o gráfico de rosca classifica municípios como mapeados/não mapeados, sem a estratificação de recência do mockup original. A seleção de município calcula uma cobertura de 0% ou 100% para um município (não é mais a taxa estadual); use Todos os municípios para a cobertura estadual. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
+**Recência:** o painel apresenta quatro cards (até 7 dias, 8 a 30 dias, acima de 30 dias e sem transmissão identificada), calculados a partir de `ultima_transmissao` no conjunto de municípios exibidos. Os percentuais usam o total do recorte atual. A classificação pode mudar com a passagem dos dias sem nova transmissão, mesmo sem atualização do banco.
+
+**Visualização de unidade:** ao selecionar um CNES georreferenciado, o mapa oculta os polígonos de cobertura e todos os demais pins, mantendo apenas o pin daquela unidade e seu popup. Ao limpar a seleção, a visão cartográfica municipal é restaurada.
+
+**Limites da POC:** A seleção de município calcula uma cobertura de 0% ou 100% para um município (não é mais a taxa estadual); use Todos os municípios para a cobertura estadual. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
