@@ -55,6 +55,87 @@ def versions():
         raise HTTPException(503, "Falha ao consultar as versões PEC na Analytics")
 
 
+
+@app.get("/api/unidades")
+def unidades(
+    municipio: str = Query(min_length=7, max_length=7, pattern=r"^15\\d{5}$"),
+    versao: str | None = Query(default=None, max_length=40),
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+):
+    """Estabelecimentos CNES por município; coordenadas e transmissão identificada."""
+    if data_inicio and data_fim and data_inicio > data_fim:
+        raise HTTPException(400, "Data inicial posterior à final")
+    if municipio not in municipalities():
+        raise HTTPException(404, "Município não encontrado no GeoJSON do Pará")
+    if os.getenv("DATA_MODE", "demo").lower() == "demo":
+        # Nunca simular endereços, CNES ou coordenadas geográficas.
+        return {"municipio": municipio, "modo": "demo", "unidades": []}
+    if os.getenv("DATA_MODE", "").lower() != "postgres":
+        raise HTTPException(500, "DATA_MODE inválido")
+
+    # A Analytics armazena município IBGE com seis dígitos; o GeoJSON com sete.
+    ibge6 = municipio[:6]
+    sql = """
+        WITH estabelecimentos AS (
+            SELECT DISTINCT ON (cnes)
+                   cnes::text AS cnes, estabelecimento, latitude, longitude
+              FROM analytics.cnes_estabelecimentos
+             WHERE uf = '15'
+               AND municipio_ibge::text IN (%s, %s)
+               AND cnes IS NOT NULL
+             ORDER BY cnes, atualizado_em DESC NULLS LAST
+        ),
+        transmissoes AS (
+            SELECT cnes::text AS cnes,
+                   MAX(ultima_transmissao) AS ultima
+              FROM analytics.vw_pec_cnes
+             WHERE uf = '15'
+               AND municipio_ibge_cnes::text IN (%s, %s)
+               AND cnes IS NOT NULL
+               AND (%s::text IS NULL OR versao_pec = %s::text)
+               AND (%s::date IS NULL OR ultima_transmissao >= %s::date)
+               AND (%s::date IS NULL OR ultima_transmissao < (%s::date + INTERVAL '1 day'))
+             GROUP BY cnes
+        )
+        SELECT e.cnes, e.estabelecimento, e.latitude, e.longitude,
+               t.ultima
+          FROM estabelecimentos e
+          LEFT JOIN transmissoes t ON t.cnes = e.cnes
+         ORDER BY e.estabelecimento, e.cnes
+    """
+    args = (ibge6, municipio, ibge6, municipio, versao, versao,
+            data_inicio, data_inicio, data_fim, data_fim)
+    try:
+        with psycopg.connect(
+            host=os.environ["PGHOST"], port=int(os.getenv("PGPORT", "5433")),
+            dbname=os.environ["PGDATABASE"], user=os.environ["PGUSER"],
+            password=os.getenv("PGPASSWORD", ""),
+            sslmode=os.getenv("PGSSLMODE", "prefer"), connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=15000"
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, args)
+                registros = cur.fetchall()
+    except Exception:
+        raise HTTPException(503, "Falha na consulta somente leitura de unidades da Analytics")
+
+    resultado = []
+    for cnes, nome, latitude, longitude, ultima in registros:
+        lat = float(latitude) if latitude is not None else None
+        lon = float(longitude) if longitude is not None else None
+        # Coordenadas fora da região plausível não são plotadas nem inventadas.
+        coordenadas_validas = (lat is not None and lon is not None and
+                              -12 <= lat <= 5 and -65 <= lon <= -43)
+        resultado.append({
+            "cnes": cnes, "estabelecimento": nome or "Unidade sem nome",
+            "latitude": lat if coordenadas_validas else None,
+            "longitude": lon if coordenadas_validas else None,
+            "possui_transmissao": ultima is not None,
+            "ultima_transmissao": ultima.isoformat() if ultima else None
+        })
+    return {"municipio": municipio, "modo": "postgres", "unidades": resultado}
+
 @app.get("/api/cobertura")
 def coverage(
     versao: str | None = Query(default=None, max_length=40),
