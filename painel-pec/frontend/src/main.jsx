@@ -5,7 +5,7 @@ import './style.css';
 
 const n=x=>new Intl.NumberFormat('pt-BR').format(x??0);
 const P={green:'#39a75a',red:'#e85d64',yellow:'#f3bc39',dark:'#203a63'};
-function MapPanel({geo,rows}){
+function MapPanel({geo,rows,selectedMunicipio}){
   const target=useRef(null);
   const data=useMemo(()=>{
     if(!geo||!rows.length)return null;
@@ -18,10 +18,10 @@ function MapPanel({geo,rows}){
     const records=features.map(f=>{
       const code=f.properties.__ibge,r=mapRows.get(code);
       return {name:f.properties.name,value:r?.cobertura??0,
-              itemStyle:{areaColor:r?.cobertura?P.green:P.red}};
+              itemStyle:{areaColor:selectedMunicipio && code!==selectedMunicipio?'#e4e9f1':(r?.cobertura?P.green:P.red)}};
     });
     return {features,records};
-  },[geo,rows]);
+  },[geo,rows,selectedMunicipio]);
   useEffect(()=>{
     if(!target.current||!data)return;
     const chart=echarts.init(target.current);
@@ -54,7 +54,7 @@ function MapPanel({geo,rows}){
 }
 function App(){
  const [geo,setGeo]=useState(null),[payload,setPayload]=useState(null),
-       [error,setError]=useState(''),[search,setSearch]=useState(''),
+       [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
        [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
        [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
        [dataFim,setDataFim]=useState('');
@@ -72,9 +72,15 @@ function App(){
  useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
  useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
  const rows=payload?.municipios||[];
- const filtered=useMemo(()=>rows.filter(r=>r.municipio.toLowerCase().includes(search.toLowerCase())),[rows,search]);
- const summary=payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
+ const filtered=useMemo(()=>municipio?rows.filter(r=>r.ibge===municipio):rows,[rows,municipio]);
+ const summary=useMemo(()=>{
+   if(!municipio)return payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
+   const total=filtered.length;
+   const mapeados=filtered.filter(r=>r.cobertura).length;
+   return {total,mapeados,pendentes:total-mapeados,percentual:total?Math.round(mapeados*10000/total)/100:0};
+ },[payload,municipio,filtered]);
  const missing=filtered.filter(x=>!x.cobertura);
+ const selectedRow=municipio?rows.find(r=>r.ibge===municipio):null;
  const chartRef=useRef(null);
  useEffect(()=>{
   if(!payload||!chartRef.current)return;
@@ -91,27 +97,28 @@ function App(){
   });
   const observer=new ResizeObserver(()=>chart.resize());observer.observe(chartRef.current);
   return()=>{observer.disconnect();chart.dispose()};
- },[payload]);
+ },[payload,summary.mapeados,summary.pendentes]);
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Todos os municípios"/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setSearch('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
+  <section className="filters"><label>Município <select aria-label="Selecionar município" value={municipio} onChange={e=>setMunicipio(e.target.value)}><option value="">Todos os municípios</option>{rows.map(r=><option key={r.ibge} value={r.ibge}>{r.municipio}</option>)}</select></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {(versao||dataInicio||dataFim)&&<div className="filter-note">Cobertura considerando apenas os últimos recebimentos consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</div>}
+  {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). Os indicadores abaixo representam somente esse município; os demais aparecem em cinza no mapa.</div>}
   <section className="metrics">
-   <article><h3>Total de municípios do Pará</h3><strong>{n(summary.total)}</strong><span>Referência municipal do GeoJSON</span></article>
+   <article><h3>{municipio?'Municípios selecionados':'Total de municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte do filtro municipal':'Referência municipal do GeoJSON'}</span></article>
    <article><h3>Municípios mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissão identificada</span></article>
    <article><h3>Municípios sem registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão identificada</span></article>
-   <article><h3>Cobertura estadual</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
+   <article><h3>{municipio?'Cobertura do município':'Cobertura estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
   </section>
   <section className="boards">
-    <article className="geo"><h2>▱ Cobertura Territorial por Município</h2><div className="map-area"><MapPanel geo={geo} rows={rows}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><h2>▱ Cobertura Territorial por Município</h2><div className="map-area"><MapPanel geo={geo} rows={rows} selectedMunicipio={municipio}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
       <article><h2>◷ Situação dos Municípios</h2><div ref={chartRef} className="donut"/></article>
-      <article><h2>☑ Municípios sem Transmissão Identificada ({missing.length})</h2>
+      <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
       <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th></tr></thead><tbody>
-      {missing.map(r=><tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className="pill">Sem transmissão</span></td></tr>)}
+      {(municipio?filtered:missing).map(r=><tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com transmissão':'Sem transmissão'}</span></td></tr>)}
       </tbody></table></div></article>
     </div>
   </section>
