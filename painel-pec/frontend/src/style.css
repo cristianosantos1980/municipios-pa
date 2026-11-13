@@ -137,3 +137,10 @@ body{font-size:16px}
 .boards .geo .map-header{flex:0 0 auto;align-items:center;padding-bottom:18px;min-height:54px}
 .boards .geo .map-header .section-heading{margin:0;align-items:center;line-height:1.35}
 .boards .geo .map-area{min-height:420px;position:relative}
+
+/* Acoes de filtro compactas: tooltips nativos via title e foco por teclado */
+.filter-actions{display:flex;align-items:center;gap:10px;align-self:flex-end}
+.filters .filter-actions .filter-icon-button{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;display:inline-flex;align-items:center;justify-content:center;line-height:0;border:1px solid #bfd0e3;border-radius:9px;background:#fff;color:#1c5794;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.filters .filter-actions .filter-icon-button svg{display:block;width:22px;height:22px;flex:none}
+.filters .filter-actions .filter-icon-button:hover{background:#eaf3ff;border-color:#7db3ee;box-shadow:0 2px 6px #1b49741a}
+.filters .filter-actions .filter-icon-button:focus-visible{outline:3px solid #2679cb;outline-offset:2px}
