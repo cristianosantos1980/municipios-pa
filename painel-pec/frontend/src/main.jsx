@@ -27,7 +27,7 @@ function UiIcon({name,size=24}){
   alert:<><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></>,
   recent:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18m6 5 2 2 4-4"/></>,
   attention:<><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></>,
-  late:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M9 14l6 5m0-5-6 5"/></>,
+  late:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M7.4 18.6 17.7 5.5"/><path d="M4.4 5.5 18.9 19"/></>,
   none:<><path d="M3 9a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0M9 15a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/></>,
   clear:<><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></>,
   reload:<><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 5M4 12l2 5a7 7 0 0 0 12.5-2"/></>
@@ -204,7 +204,7 @@ function App(){
         <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th><th>Data do último recebimento</th><th>Hora do último recebimento</th></tr></thead><tbody>
         {(municipio?filtered:missing).map(r=>{
           const recebido=receberDataHora(r.ultima_transmissao);
-          return <tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com recebimento':'Sem recebimento'}</span></td><td>{recebido.data||<span className="no-data">Sem dados</span>}</td><td>{recebido.hora||<span className="no-data">Sem dados</span>}</td></tr>;
+          return <tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill pill-no-receipt'}>{r.cobertura?'Com recebimento':'Sem recebimento'}</span></td><td>{recebido.data||<span className="no-data">Sem dados</span>}</td><td>{recebido.hora||<span className="no-data">Sem dados</span>}</td></tr>;
         })}
         </tbody></table></div>
       </article>
