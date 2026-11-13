@@ -50,6 +50,14 @@ docker compose -f compose.yaml up -d --build
 
 A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. O frontend lê o GeoJSON do repositório, sem download adicional.
 
+## Mapa com OpenStreetMap (opcional)
+
+No cartão de cobertura territorial, escolha entre **Mapa simples** (Apache ECharts, sem mapas externos) e **OpenStreetMap** (Leaflet com zoom e navegação). O OpenStreetMap mostra ruas e localidades como fundo; a cor verde/vermelha vem exclusivamente dos 144 polígonos do `PARA.geojson` e da resposta da API. A seleção de município destaca e aproxima a região.
+
+O navegador do usuário precisa acessar `https://tile.openstreetmap.org` para carregar os mapas de fundo. A licença do OpenStreetMap é exibida no mapa. Esta opção deve ser usada na POC sob a política pública de tiles: [OSM Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/). Não fazer prefetch ou download em massa. Para uso institucional com muitos acessos, avaliar provedor de tiles com SLA ou serviço próprio.
+
+O servidor de API não envia dados clínicos nem credenciais ao OpenStreetMap; o navegador, entretanto, realiza requisições aos servidores de tiles, expondo metadados de rede e da área visualizada. O **Mapa simples** continua disponível para ambientes com acesso externo restrito.
+
 ## Filtros
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
