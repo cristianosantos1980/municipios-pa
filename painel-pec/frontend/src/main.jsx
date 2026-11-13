@@ -12,7 +12,7 @@ function MapPanel({geo,rows}){
     const mapRows=new Map(rows.map(x=>[x.ibge,x]));
     const features=geo.features.map(f=>{
       const p=f.properties||{};
-      const code=String(p.CO_MUN||p.id||f.id||'').trim();
+      const code=String(p.CD_MUN||p.id||f.id||'').trim();
       return {...f,properties:{...p,name:p.NM_MUN||p.name||code,__ibge:code}};
     });
     const records=features.map(f=>{
