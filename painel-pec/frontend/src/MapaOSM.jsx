@@ -61,6 +61,9 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
     if(!map||!geo||!rows.length)return;
     if(polygonRef.current)map.removeLayer(polygonRef.current);
     if(municipioPinsRef.current)map.removeLayer(municipioPinsRef.current);
+    // O foco em um CNES remove os polígonos coloridos e os pins municipais.
+    // O pin selecionado permanece na camada de unidades.
+    if(selectedUnidade){polygonRef.current=null;municipioPinsRef.current=null;return;}
     const byCode=new Map(rows.map(row=>[row.ibge,row]));
     const polygons=L.geoJSON(geo,{
       style:feature=>{
@@ -128,7 +131,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       if(municipioPinsRef.current===layerMunicipios)municipioPinsRef.current=null;
       if(polygonRef.current===polygons)polygonRef.current=null;
     };
-  },[geo,rows,selectedMunicipio]);
+  },[geo,rows,selectedMunicipio,selectedUnidade]);
 
   useEffect(()=>{
     const map=mapRef.current;
@@ -142,6 +145,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       const {latitude,longitude,cnes}=unidade;
       if(typeof latitude!=='number'||typeof longitude!=='number')continue;
       if(!Number.isFinite(latitude)||!Number.isFinite(longitude))continue;
+      if(selectedUnidade&&String(cnes)!==String(selectedUnidade))continue;
       const marker=L.marker([latitude,longitude],{
         icon:pinIcon(Boolean(unidade.possui_transmissao),true),
         zIndexOffset:500
@@ -151,14 +155,14 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
         'CNES: '+esc(cnes)+'<br>'+status+
         (unidade.ultima_transmissao?'<br>Última transmissão: '+esc(unidade.ultima_transmissao):''));
       marker.addTo(layer);
-      unidadeMarkerByCnesRef.current.set(cnes,marker);
+      unidadeMarkerByCnesRef.current.set(String(cnes),marker);
     }
     return()=>{
       if(map.hasLayer(layer))map.removeLayer(layer);
       if(unidadePinsRef.current===layer)unidadePinsRef.current=null;
       unidadeMarkerByCnesRef.current.clear();
     };
-  },[selectedMunicipio,unidades]);
+  },[selectedMunicipio,unidades,selectedUnidade]);
 
   useEffect(()=>{
     const map=mapRef.current;
@@ -167,7 +171,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
     if(!unidade||unidade.latitude==null||unidade.longitude==null)return;
     const latlng=[unidade.latitude,unidade.longitude];
     map.flyTo(latlng,Math.max(map.getZoom(),13),{duration:.6});
-    const marker=unidadeMarkerByCnesRef.current.get(selectedUnidade);
+    const marker=unidadeMarkerByCnesRef.current.get(String(selectedUnidade));
     if(marker)marker.openPopup();
   },[selectedUnidade,unidades]);
 
