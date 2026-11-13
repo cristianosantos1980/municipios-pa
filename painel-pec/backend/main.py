@@ -71,15 +71,15 @@ def buscar_unidades(q: str = Query(min_length=3, max_length=80)):
     # O GeoJSON tem IBGE completo (7); a tabela analítica pode usar IBGE6.
     nomes = municipalities()
     por_seis = {codigo[:6]: codigo for codigo in nomes}
-    padrao = "%" + termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    padrao = "%" + termo.replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%"
     sql = """
         SELECT cnes::text, estabelecimento, municipio_ibge::text
           FROM analytics.cnes_estabelecimentos
          WHERE uf='15'
            AND cnes IS NOT NULL
            AND municipio_ibge IS NOT NULL
-           AND (estabelecimento ILIKE %s ESCAPE '\\'
-                OR cnes::text LIKE %s ESCAPE '\\')
+           AND (estabelecimento ILIKE %s ESCAPE '!'
+                OR cnes::text LIKE %s ESCAPE '!')
          ORDER BY estabelecimento, cnes
          LIMIT 60
     """
