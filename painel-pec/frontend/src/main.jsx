@@ -7,7 +7,7 @@ const n=x=>new Intl.NumberFormat('pt-BR').format(x??0);
 const DAY=86400000;
 const dateISO=d=>{const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10)};
 const ageDays=value=>value?Math.floor((new Date().setHours(0,0,0,0)-new Date(String(value).slice(0,10)+'T00:00:00').getTime())/DAY):null;
-const recency=[{key:'recent',label:'Transmissão recente',detail:'Até 7 dias',icon:'✓'},{key:'attention',label:'Atenção',detail:'8 a 30 dias',icon:'!'},{key:'late',label:'Sem recebimento recente',detail:'Mais de 30 dias',icon:'×'},{key:'none',label:'Sem transmissão identificada',detail:'Sem registro',icon:'∅'}];
+const recency=[{key:'recent',label:'Recebimento recente',detail:'Até 7 dias',icon:'✓'},{key:'attention',label:'Atenção',detail:'8 a 30 dias',icon:'!'},{key:'late',label:'Sem recebimento recente',detail:'Mais de 30 dias',icon:'×'},{key:'none',label:'Sem recebimento identificado',detail:'Sem registro',icon:'∅'}];
 const category=row=>{const age=ageDays(row.ultima_transmissao);return !row.cobertura||age===null?'none':age<=7?'recent':age<=30?'attention':'late'};
 const receberDataHora=value=>{
   if(!value)return {data:null,hora:null};
@@ -185,24 +185,24 @@ function App(){
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
   {(versao||dataInicio||dataFim)&&<div className="filter-note">Cobertura considerando apenas os últimos recebimentos consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</div>}
-  {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam transmissão identificada na Analytics, não a situação cadastral do CNES.</div>}
+  {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam recebimento identificado na Analytics, não a situação cadastral do CNES.</div>}
   {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
    <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>{municipio?'Municípios selecionados':'Total de Municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte municipal':'Referência estadual (IBGE)'}</span></div></article>
-   <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissões identificadas</span></div></article>
-   <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão na Analytics</span></div></article>
+   <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com recebimentos identificados</span></div></article>
+   <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem recebimento na Analytics</span></div></article>
    <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>{municipio?'Cobertura do Município':'Cobertura Estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
   <section className="boards">
-    <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com recebimento　 <span className="dot red"/> Sem recebimento</footer></article>
     <div className="right">
-      <article className="recency-panel"><h2 className="section-heading"><span className="section-icon section-icon-recency"><UiIcon name="calendar" size={25}/></span>Situação dos Municípios por Recência da Transmissão</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon"><UiIcon name={c.key} size={25}/></span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
+      <article className="recency-panel"><h2 className="section-heading"><span className="section-icon section-icon-recency"><UiIcon name="calendar" size={25}/></span>Situação dos Municípios por Recência do Recebimento</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon"><UiIcon name={c.key} size={25}/></span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
       <article className="municipality-table-panel">
-        <h2 className="section-heading"><span className="section-icon section-icon-alert"><UiIcon name="alert" size={25}/></span>{municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
+        <h2 className="section-heading"><span className="section-icon section-icon-alert"><UiIcon name="alert" size={25}/></span>{municipio?'Situação do Município Selecionado':'Municípios sem Recebimento Identificado ('+missing.length+')'}</h2>
         <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th><th>Data do último recebimento</th><th>Hora do último recebimento</th></tr></thead><tbody>
         {(municipio?filtered:missing).map(r=>{
           const recebido=receberDataHora(r.ultima_transmissao);
-          return <tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com transmissão':'Sem transmissão'}</span></td><td>{recebido.data||<span className="no-data">Sem dados</span>}</td><td>{recebido.hora||<span className="no-data">Sem dados</span>}</td></tr>;
+          return <tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com recebimento':'Sem recebimento'}</span></td><td>{recebido.data||<span className="no-data">Sem dados</span>}</td><td>{recebido.hora||<span className="no-data">Sem dados</span>}</td></tr>;
         })}
         </tbody></table></div>
       </article>
