@@ -35,6 +35,11 @@ function MapPanel({geo,rows}){
                 'CNES distintos: '+n(r?.cnes)].join('<br/>');
       }},
       series:[{type:'map',map:'para-poc',roam:false,
+               // O ECharts usa 0.75 por padrão para mapas GeoJSON, estreitando
+               // artificialmente o Pará. Como ele está próximo ao Equador,
+               // 1.0 preserva melhor as proporções dos limites municipais.
+               aspectScale:1,
+
                emphasis:{label:{show:false},itemStyle:{areaColor:'#f4c54b'}},
                itemStyle:{borderColor:'#fff',borderWidth:.65},
                selectedMode:false,
