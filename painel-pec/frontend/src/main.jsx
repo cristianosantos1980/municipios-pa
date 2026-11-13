@@ -1,11 +1,14 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import * as echarts from 'echarts';
 import MapaOSM from './MapaOSM';
 import './style.css';
 
 const n=x=>new Intl.NumberFormat('pt-BR').format(x??0);
-const P={green:'#39a75a',red:'#e85d64',yellow:'#f3bc39',dark:'#203a63'};
+const DAY=86400000;
+const dateISO=d=>{const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,10)};
+const ageDays=value=>value?Math.floor((new Date().setHours(0,0,0,0)-new Date(String(value).slice(0,10)+'T00:00:00').getTime())/DAY):null;
+const recency=[{key:'recent',label:'Transmissão recente',detail:'Até 7 dias',icon:'✓'},{key:'attention',label:'Atenção',detail:'8 a 30 dias',icon:'!'},{key:'late',label:'Sem recebimento recente',detail:'Mais de 30 dias',icon:'×'},{key:'none',label:'Sem transmissão identificada',detail:'Sem registro',icon:'∅'}];
+const category=row=>{const age=ageDays(row.ultima_transmissao);return !row.cobertura||age===null?'none':age<=7?'recent':age<=30?'attention':'late'};
 const normalizar=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function MunicipioPesquisa({rows,value,onChange}){
   const [texto,setTexto]=useState('');
@@ -89,7 +92,7 @@ function App(){
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
        [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
        [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
-       [dataFim,setDataFim]=useState(''),
+       [dataFim,setDataFim]=useState(''),[periodo,setPeriodo]=useState('all'),
        [unidade,setUnidade]=useState(''),[unidades,setUnidades]=useState([]),
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
        [erroUnidades,setErroUnidades]=useState('');
@@ -136,27 +139,19 @@ function App(){
  },[payload,municipio,filtered]);
  const missing=filtered.filter(x=>!x.cobertura);
  const selectedRow=municipio?rows.find(r=>r.ibge===municipio):null;
- const chartRef=useRef(null);
- useEffect(()=>{
-  if(!payload||!chartRef.current)return;
-  const chart=echarts.init(chartRef.current);
-  chart.setOption({
-    color:[P.green,P.red],
-    tooltip:{trigger:'item'},
-    legend:{orient:'vertical',right:0,top:'center',textStyle:{fontSize:12}},
-    series:[{type:'pie',radius:['48%','74%'],center:['29%','51%'],
-      label:{show:false},
-      data:[{name:'Com transmissão identificada',value:summary.mapeados},
-            {name:'Sem transmissão identificada',value:summary.pendentes}]
-    }]
-  });
-  const observer=new ResizeObserver(()=>chart.resize());observer.observe(chartRef.current);
-  return()=>{observer.disconnect();chart.dispose()};
- },[payload,summary.mapeados,summary.pendentes]);
+ const recencia=useMemo(()=>recency.map(c=>({...c,count:filtered.filter(r=>category(r)===c.key).length,percentage:filtered.length?filtered.filter(r=>category(r)===c.key).length*100/filtered.length:0})),[filtered]);
+ const selecionarPeriodo=value=>{
+  setPeriodo(value);
+  if(value==='custom')return;
+  if(value==='all'){setDataInicio('');setDataFim('');return}
+  const now=new Date();const end=dateISO(now);const days=Number(value);
+  const begin=new Date(now);begin.setDate(begin.getDate()-days+1);
+  setDataInicio(dateISO(begin));setDataFim(end);
+ };
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('');setUnidade('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="period-filter">Data do Recebimento <select aria-label="Data do Recebimento" value={periodo} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select></label>{periodo==='custom'&&<><label>De <input aria-label="Data inicial de recebimento" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Até <input aria-label="Data final de recebimento" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label></>}<button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setMunicipio('');setUnidade('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
@@ -164,15 +159,15 @@ function App(){
   {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam transmissão identificada na Analytics, não a situação cadastral do CNES.</div>}
   {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
-   <article><h3>{municipio?'Municípios selecionados':'Total de municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte do filtro municipal':'Referência municipal do GeoJSON'}</span></article>
-   <article><h3>Municípios mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissão identificada</span></article>
-   <article><h3>Municípios sem registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão identificada</span></article>
-   <article><h3>{municipio?'Cobertura do município':'Cobertura estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
+   <article className="metric-total"><span className="metric-icon" aria-hidden="true">▥</span><div><h3>{municipio?'Municípios selecionados':'Total de Municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte municipal':'Referência estadual (IBGE)'}</span></div></article>
+   <article className="metric-mapped"><span className="metric-icon" aria-hidden="true">✓</span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissões identificadas</span></div></article>
+   <article className="metric-missing"><span className="metric-icon" aria-hidden="true">⊘</span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão na Analytics</span></div></article>
+   <article className="metric-coverage"><span className="metric-icon" aria-hidden="true">◎</span><div><h3>{municipio?'Cobertura do Município':'Cobertura Estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
   <section className="boards">
     <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
-      <article><h2>◷ Situação dos Municípios</h2><div ref={chartRef} className="donut"/></article>
+      <article className="recency-panel"><h2>◷ Situação dos Municípios por Recência da Transmissão</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon" aria-hidden="true">{c.icon}</span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
       <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
       <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th></tr></thead><tbody>
       {(municipio?filtered:missing).map(r=><tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com transmissão':'Sem transmissão'}</span></td></tr>)}
