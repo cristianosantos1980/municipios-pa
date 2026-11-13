@@ -5,6 +5,44 @@ import './style.css';
 
 const n=x=>new Intl.NumberFormat('pt-BR').format(x??0);
 const P={green:'#39a75a',red:'#e85d64',yellow:'#f3bc39',dark:'#203a63'};
+const normalizar=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function MunicipioPesquisa({rows,value,onChange}){
+  const [texto,setTexto]=useState('');
+  const [aberto,setAberto]=useState(false);
+  const selecionado=rows.find(r=>r.ibge===value);
+  useEffect(()=>{setTexto(selecionado?.municipio||'')},[value,selecionado?.municipio]);
+  const opcoes=useMemo(()=>{
+    const termo=normalizar(texto.trim());
+    return termo?rows.filter(r=>normalizar(r.municipio).includes(termo)):rows;
+  },[rows,texto]);
+  const escolher=registro=>{
+    onChange(registro?.ibge||'');
+    setTexto(registro?.municipio||'');
+    setAberto(false);
+  };
+  return <div className="municipio-picker">
+    <input type="text" autoComplete="off" aria-label="Pesquisar município"
+      role="combobox" aria-autocomplete="list" aria-expanded={aberto}
+      aria-controls="municipios-opcoes" value={texto}
+      placeholder="Pesquisar município..."
+      onFocus={()=>setAberto(true)}
+      onChange={e=>{setTexto(e.target.value);setAberto(true);if(value)onChange('')}}
+      onBlur={()=>setAberto(false)}
+      onKeyDown={e=>{
+        if(e.key==='Escape'){setAberto(false);setTexto(selecionado?.municipio||'')}
+        if(e.key==='Enter'&&aberto&&opcoes.length){e.preventDefault();escolher(opcoes[0])}
+      }}/>
+    {(texto||value)&&<button className="municipio-clear" type="button" aria-label="Limpar município" onMouseDown={e=>e.preventDefault()} onClick={()=>escolher(null)}>×</button>}
+    {aberto&&<div className="municipio-options" id="municipios-opcoes" role="listbox">
+      <button type="button" role="option" aria-selected={!value}
+        onMouseDown={e=>{e.preventDefault();escolher(null)}}>Todos os municípios</button>
+      {opcoes.length?opcoes.map(r=><button type="button" role="option" aria-selected={value===r.ibge}
+        key={r.ibge} onMouseDown={e=>{e.preventDefault();escolher(r)}}>
+        {r.municipio}
+      </button>):<div className="municipio-empty">Nenhum município encontrado</div>}
+    </div>}
+  </div>;
+}
 function MapPanel({geo,rows,selectedMunicipio}){
   const target=useRef(null);
   const data=useMemo(()=>{
@@ -101,7 +139,7 @@ function App(){
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <select aria-label="Selecionar município" value={municipio} onChange={e=>setMunicipio(e.target.value)}><option value="">Todos os municípios</option>{rows.map(r=><option key={r.ibge} value={r.ibge}>{r.municipio}</option>)}</select></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={setMunicipio}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {(versao||dataInicio||dataFim)&&<div className="filter-note">Cobertura considerando apenas os últimos recebimentos consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</div>}
