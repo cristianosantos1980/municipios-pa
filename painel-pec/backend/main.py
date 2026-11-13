@@ -13,7 +13,7 @@ def municipalities():
     result={}
     for index, f in enumerate(data.get("features", []), start=1):
         p = f.get("properties") or {}
-        code = str(p.get("CO_MUN") or p.get("id") or f.get("id") or "").strip()
+        code = str(p.get("CD_MUN") or p.get("id") or f.get("id") or "").strip()
         name = str(p.get("NM_MUN") or p.get("name") or code).strip()
         # A API utiliza apenas o código IBGE e o nome. Geometrias podem ser
         # verificadas pelo frontend cartográfico, sem impedir os indicadores.
