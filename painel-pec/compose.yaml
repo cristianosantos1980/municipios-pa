@@ -30,7 +30,8 @@ services:
       api:
         condition: service_healthy
     security_opt: ["no-new-privileges:true"]
-    cap_drop: [ALL]
+    # A imagem oficial do Nginx precisa ajustar proprietários de diretórios
+    # temporários e iniciar workers com usuário menos privilegiado.
     networks: [poc]
 networks:
   poc:
