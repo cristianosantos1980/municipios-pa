@@ -56,6 +56,64 @@ def versions():
 
 
 
+
+@app.get("/api/unidades/busca")
+def buscar_unidades(q: str = Query(min_length=3, max_length=80)):
+    """Busca estadual, restrita ao CNES público; sem exigir município prévio."""
+    termo = q.strip()
+    if len(termo) < 3:
+        raise HTTPException(400, "Informe ao menos três caracteres")
+    if os.getenv("DATA_MODE", "demo").lower() == "demo":
+        return {"unidades": [], "modo": "demo"}
+    if os.getenv("DATA_MODE", "").lower() != "postgres":
+        raise HTTPException(500, "DATA_MODE inválido")
+
+    # O GeoJSON tem IBGE completo (7); a tabela analítica pode usar IBGE6.
+    nomes = municipalities()
+    por_seis = {codigo[:6]: codigo for codigo in nomes}
+    padrao = "%" + termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+    sql = """
+        SELECT cnes::text, estabelecimento, municipio_ibge::text
+          FROM analytics.cnes_estabelecimentos
+         WHERE uf='15'
+           AND cnes IS NOT NULL
+           AND municipio_ibge IS NOT NULL
+           AND (estabelecimento ILIKE %s ESCAPE '\\'
+                OR cnes::text LIKE %s ESCAPE '\\')
+         ORDER BY estabelecimento, cnes
+         LIMIT 60
+    """
+    try:
+        with psycopg.connect(
+            host=os.environ["PGHOST"], port=int(os.getenv("PGPORT", "5433")),
+            dbname=os.environ["PGDATABASE"], user=os.environ["PGUSER"],
+            password=os.getenv("PGPASSWORD", ""),
+            sslmode=os.getenv("PGSSLMODE", "prefer"), connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=8000"
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (padrao, padrao))
+                registros = cur.fetchall()
+    except Exception:
+        raise HTTPException(503, "Falha na busca de unidades de saúde da Analytics")
+
+    resultado = []
+    vistos = set()
+    for cnes, nome, codigo in registros:
+        codigo = codigo.strip()
+        ibge = codigo if len(codigo) == 7 and codigo in nomes else por_seis.get(codigo)
+        chave = (ibge, cnes)
+        if not ibge or chave in vistos:
+            continue
+        vistos.add(chave)
+        resultado.append({
+            "cnes": cnes, "estabelecimento": nome or "Unidade sem nome",
+            "municipio_ibge": ibge, "municipio_nome": nomes[ibge]
+        })
+        if len(resultado) >= 30:
+            break
+    return {"unidades": resultado, "modo": "postgres"}
+
 @app.get("/api/unidades")
 def unidades(
     municipio: str = Query(min_length=7, max_length=7, pattern=r"^15[0-9]{5}$"),
