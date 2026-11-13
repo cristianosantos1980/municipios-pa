@@ -1,8 +1,8 @@
 """POC SESPA: API apenas de leitura; sem DDL, INSERT ou UPDATE."""
 import os, json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 import psycopg
 
 app=FastAPI(title="Cobertura Municipal PEC — POC", docs_url=None, redoc_url=None)
@@ -30,8 +30,41 @@ def municipalities():
 def health():
     return {"status":"ok"}
 
+@app.get("/api/versoes")
+def versions():
+    """Lista versões observadas, sem expor dados individuais."""
+    if os.getenv("DATA_MODE", "demo").lower() == "demo":
+        return {"versoes": ["5.5.28", "5.5.24", "5.5.22"]}
+    try:
+        with psycopg.connect(
+            host=os.environ["PGHOST"], port=int(os.getenv("PGPORT", "5433")),
+            dbname=os.environ["PGDATABASE"], user=os.environ["PGUSER"],
+            password=os.getenv("PGPASSWORD", ""),
+            sslmode=os.getenv("PGSSLMODE", "prefer"), connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=15000"
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT DISTINCT versao_pec
+                    FROM analytics.vw_pec_cnes
+                    WHERE uf = '15' AND versao_pec IS NOT NULL
+                    ORDER BY versao_pec DESC
+                """)
+                return {"versoes": [row[0] for row in cur.fetchall()]}
+    except Exception:
+        raise HTTPException(503, "Falha ao consultar as versões PEC na Analytics")
+
+
 @app.get("/api/cobertura")
-def coverage():
+def coverage(
+    versao: str | None = Query(default=None, max_length=40),
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+):
+    if data_inicio and data_fim and data_inicio > data_fim:
+        raise HTTPException(400, "Data inicial posterior à final")
+    if versao is not None and not versao.strip():
+        versao = None
     try: base=municipalities()
     except Exception as exc: raise HTTPException(500,str(exc))
     mode=os.getenv("DATA_MODE","demo").lower()
@@ -39,6 +72,11 @@ def coverage():
     if mode=="demo":
         # Demonstração determinística, NÃO é dado oficial.
         matched={k: {"cnes": 1+(int(k)%17), "ultima":None} for k in base if int(k)%9!=0}
+        if versao and versao not in ("5.5.28", "5.5.24", "5.5.22"):
+            matched = {}
+        if data_inicio or data_fim:
+            # Não criar datas falsas no modo demonstrativo.
+            matched = {}
     elif mode=="postgres":
         sql="""
         SELECT municipio_ibge_cnes AS ibge,
@@ -48,6 +86,9 @@ def coverage():
         WHERE uf='15'
           AND municipio_ibge_cnes IS NOT NULL
           AND cnes IS NOT NULL
+          AND (%s::text IS NULL OR versao_pec = %s::text)
+          AND (%s::date IS NULL OR ultima_transmissao >= %s::date)
+          AND (%s::date IS NULL OR ultima_transmissao < (%s::date + INTERVAL '1 day'))
         GROUP BY municipio_ibge_cnes
         """
         # O cadastro da Analytics usa IBGE municipal de 6 dígitos,
@@ -69,7 +110,7 @@ def coverage():
                 connect_timeout=5,options="-c default_transaction_read_only=on -c statement_timeout=15000"
             ) as conn:
                 with conn.cursor() as cur:
-                    cur.execute(sql)
+                    cur.execute(sql, (versao, versao, data_inicio, data_inicio, data_fim, data_fim))
                     for ibge,cnes,ultima in cur.fetchall():
                         codigo_origem = str(ibge).strip()
                         if len(codigo_origem) == 6 and codigo_origem.isdigit():
@@ -92,6 +133,8 @@ def coverage():
           for code,name in sorted(base.items(),key=lambda v:v[1])]
     n=sum(x["cobertura"] for x in rows)
     return {"modo":mode,"gerado_em":datetime.now().isoformat(timespec="seconds"),
+            "filtros": {"versao":versao,"data_inicio":data_inicio.isoformat() if data_inicio else None,
+                        "data_fim":data_fim.isoformat() if data_fim else None},
             "resumo":{"total":len(rows),"mapeados":n,"pendentes":len(rows)-n,
                       "percentual":round(n*100/len(rows),2)},
             "municipios":rows}
