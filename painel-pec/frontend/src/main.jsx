@@ -9,6 +9,29 @@ const dateISO=d=>{const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
 const ageDays=value=>value?Math.floor((new Date().setHours(0,0,0,0)-new Date(String(value).slice(0,10)+'T00:00:00').getTime())/DAY):null;
 const recency=[{key:'recent',label:'Transmissão recente',detail:'Até 7 dias',icon:'✓'},{key:'attention',label:'Atenção',detail:'8 a 30 dias',icon:'!'},{key:'late',label:'Sem recebimento recente',detail:'Mais de 30 dias',icon:'×'},{key:'none',label:'Sem transmissão identificada',detail:'Sem registro',icon:'∅'}];
 const category=row=>{const age=ageDays(row.ultima_transmissao);return !row.cobertura||age===null?'none':age<=7?'recent':age<=30?'attention':'late'};
+const receberDataHora=value=>{
+  if(!value)return {data:null,hora:null};
+  const parts=String(value).match(/^(\\d{4})-(\\d{2})-(\\d{2})(?:[T ](\\d{2}):(\\d{2}))?/);
+  if(!parts)return {data:null,hora:null};
+  return {data:parts[3]+'/'+parts[2]+'/'+parts[1],hora:parts[4]?parts[4]+':'+parts[5]:null};
+};
+function UiIcon({name,size=24}){
+ const base={width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.9,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true};
+ const shapes={
+  building:<><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M2 9 12 3l10 6M9 21v-7h6v7M7 12h.01M17 12h.01"/></>,
+  mapped:<><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><path d="m9 10 2 2 4-4"/></>,
+  missing:<><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h3M9 16l6 3m0-3-6 3"/></>,
+  coverage:<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 8-8M16 4h4v4"/></>,
+  map:<><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6ZM9 3v15M15 6v15"/></>,
+  calendar:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 15h3M13 15h3"/></>,
+  alert:<><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></>,
+  recent:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18m6 5 2 2 4-4"/></>,
+  attention:<><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5M12 17h.01"/></>,
+  late:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M9 14l6 5m0-5-6 5"/></>,
+  none:<><path d="M3 9a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0M9 15a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/></>
+ };
+ return <svg {...base}>{shapes[name]||shapes.alert}</svg>;
+}
 const normalizar=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function MunicipioPesquisa({rows,value,onChange}){
   const [texto,setTexto]=useState('');
@@ -159,19 +182,24 @@ function App(){
   {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam transmissão identificada na Analytics, não a situação cadastral do CNES.</div>}
   {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
-   <article className="metric-total"><span className="metric-icon" aria-hidden="true">▥</span><div><h3>{municipio?'Municípios selecionados':'Total de Municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte municipal':'Referência estadual (IBGE)'}</span></div></article>
-   <article className="metric-mapped"><span className="metric-icon" aria-hidden="true">✓</span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissões identificadas</span></div></article>
-   <article className="metric-missing"><span className="metric-icon" aria-hidden="true">⊘</span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão na Analytics</span></div></article>
-   <article className="metric-coverage"><span className="metric-icon" aria-hidden="true">◎</span><div><h3>{municipio?'Cobertura do Município':'Cobertura Estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
+   <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>{municipio?'Municípios selecionados':'Total de Municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte municipal':'Referência estadual (IBGE)'}</span></div></article>
+   <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissões identificadas</span></div></article>
+   <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem transmissão na Analytics</span></div></article>
+   <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>{municipio?'Cobertura do Município':'Cobertura Estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
   <section className="boards">
-    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
-      <article className="recency-panel"><h2>◷ Situação dos Municípios por Recência da Transmissão</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon" aria-hidden="true">{c.icon}</span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
-      <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
-      <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th></tr></thead><tbody>
-      {(municipio?filtered:missing).map(r=><tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com transmissão':'Sem transmissão'}</span></td></tr>)}
-      </tbody></table></div></article>
+      <article className="recency-panel"><h2 className="section-heading"><span className="section-icon section-icon-recency"><UiIcon name="calendar" size={25}/></span>Situação dos Municípios por Recência da Transmissão</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon"><UiIcon name={c.key} size={25}/></span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
+      <article className="municipality-table-panel">
+        <h2 className="section-heading"><span className="section-icon section-icon-alert"><UiIcon name="alert" size={25}/></span>{municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
+        <div className="table-wrap"><table><thead><tr><th>Código IBGE</th><th>Município</th><th>Situação</th><th>Data do último recebimento</th><th>Hora do último recebimento</th></tr></thead><tbody>
+        {(municipio?filtered:missing).map(r=>{
+          const recebido=receberDataHora(r.ultima_transmissao);
+          return <tr key={r.ibge}><td>{r.ibge}</td><td>{r.municipio}</td><td><span className={r.cobertura?'pill pill-ok':'pill'}>{r.cobertura?'Com transmissão':'Sem transmissão'}</span></td><td>{recebido.data||<span className="no-data">Sem dados</span>}</td><td>{recebido.hora||<span className="no-data">Sem dados</span>}</td></tr>;
+        })}
+        </tbody></table></div>
+      </article>
     </div>
   </section>
   <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · Última consulta: {lastRefresh?.toLocaleString('pt-BR')||'—'} · GeoJSON: municipios-pa</p>
