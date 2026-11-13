@@ -166,12 +166,8 @@ function App(){
  },[municipio,versao,dataInicio,dataFim,lastRefresh]);
  const rows=payload?.municipios||[];
  const filtered=useMemo(()=>municipio?rows.filter(r=>r.ibge===municipio):rows,[rows,municipio]);
- const summary=useMemo(()=>{
-   if(!municipio)return payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
-   const total=filtered.length;
-   const mapeados=filtered.filter(r=>r.cobertura).length;
-   return {total,mapeados,pendentes:total-mapeados,percentual:total?Math.round(mapeados*10000/total)/100:0};
- },[payload,municipio,filtered]);
+ // Indicadores executivos permanecem estaduais mesmo com municipio/unidade selecionados.
+ const summary=payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
  const missing=filtered.filter(x=>!x.cobertura);
  const selectedRow=municipio?rows.find(r=>r.ibge===municipio):null;
  const ultimoRecebimento=useMemo(()=>filtered.reduce((latest,row)=>{
@@ -180,7 +176,7 @@ function App(){
  },null),[filtered]);
  const ultimoRecebimentoFormatado=receberDataHora(ultimoRecebimento);
  const recebimentoNoRecorte=Boolean(municipio||versao||dataInicio||dataFim);
- const recencia=useMemo(()=>recency.map(c=>({...c,count:filtered.filter(r=>category(r)===c.key).length,percentage:filtered.length?filtered.filter(r=>category(r)===c.key).length*100/filtered.length:0})),[filtered]);
+ const recencia=useMemo(()=>recency.map(c=>{const count=rows.filter(r=>category(r)===c.key).length;return {...c,count,percentage:rows.length?count*100/rows.length:0}}),[rows]);
  const selecionarPeriodo=value=>{
   setPeriodo(value);
   if(value==='custom')return;
@@ -200,10 +196,10 @@ function App(){
   {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam recebimento identificado na Analytics, não a situação cadastral do CNES.</div>}
   {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
-   <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>{municipio?'Municípios selecionados':'Total de Municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte municipal':'Referência estadual (IBGE)'}</span></div></article>
+   <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>Total de Municípios do Pará</h3><strong>{n(summary.total)}</strong><span>Referência estadual (IBGE)</span></div></article>
    <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Municípios Mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com recebimentos identificados</span></div></article>
    <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Municípios sem Registro</h3><strong>{n(summary.pendentes)}</strong><span>Sem recebimento na Analytics</span></div></article>
-   <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>{municipio?'Cobertura do Município':'Cobertura Estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
+   <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>Cobertura Estadual</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
   <section className="boards">
     <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com recebimento　 <span className="dot red"/> Sem recebimento</footer></article>
