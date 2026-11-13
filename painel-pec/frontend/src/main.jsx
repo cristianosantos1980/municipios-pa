@@ -55,15 +55,22 @@ function MapPanel({geo,rows}){
 function App(){
  const [geo,setGeo]=useState(null),[payload,setPayload]=useState(null),
        [error,setError]=useState(''),[search,setSearch]=useState(''),
-       [lastRefresh,setLastRefresh]=useState(null);
+       [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
+       [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
+       [dataFim,setDataFim]=useState('');
  const refresh=async()=>{
   try{
-   const res=await fetch('/api/cobertura',{cache:'no-store'});
+   const params=new URLSearchParams();
+   if(versao)params.set('versao',versao);
+   if(dataInicio)params.set('data_inicio',dataInicio);
+   if(dataFim)params.set('data_fim',dataFim);
+   const res=await fetch('/api/cobertura'+(params.size?'?'+params:''),{cache:'no-store'});
    if(!res.ok)throw new Error('Falha na API: '+res.status);
    setPayload(await res.json());setLastRefresh(new Date());setError('');
   }catch(e){setError(String(e))}
  };
- useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[]);
+ useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
+ useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
  const rows=payload?.municipios||[];
  const filtered=useMemo(()=>rows.filter(r=>r.municipio.toLowerCase().includes(search.toLowerCase())),[rows,search]);
  const summary=payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
@@ -73,7 +80,7 @@ function App(){
   if(!payload||!chartRef.current)return;
   const chart=echarts.init(chartRef.current);
   chart.setOption({
-    color:[P.green,P.yellow,P.red,'#a7afbe'],
+    color:[P.green,P.red],
     tooltip:{trigger:'item'},
     legend:{orient:'vertical',right:0,top:'center',textStyle:{fontSize:12}},
     series:[{type:'pie',radius:['48%','74%'],center:['29%','51%'],
@@ -85,12 +92,13 @@ function App(){
   const observer=new ResizeObserver(()=>chart.resize());observer.observe(chartRef.current);
   return()=>{observer.disconnect();chart.dispose()};
  },[payload]);
- return <><header className="top"><span>◌ Metabase <small>│</small> Explorar　 <b>Painéis</b>　 Coleções　 Perguntas</span><span>SESPA | Prova de conceito</span></header>
+ return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
-  <div className="heading"><div className="mark">⌁</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Todos os municípios"/></label><label>Versão PEC <select disabled><option>Disponível após integração por versão</option></select></label><label>Data da transmissão <select disabled><option>Disponível na próxima etapa</option></select></label><button onClick={refresh}>↻ Atualizar</button></section>
+  <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
+  <section className="filters"><label>Município<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Todos os municípios"/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setSearch('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
+  {(versao||dataInicio||dataFim)&&<div className="filter-note">Cobertura considerando apenas os últimos recebimentos consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</div>}
   <section className="metrics">
    <article><h3>Total de municípios do Pará</h3><strong>{n(summary.total)}</strong><span>Referência municipal do GeoJSON</span></article>
    <article><h3>Municípios mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissão identificada</span></article>
