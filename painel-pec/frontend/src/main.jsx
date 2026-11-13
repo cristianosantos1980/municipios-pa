@@ -44,59 +44,12 @@ function MunicipioPesquisa({rows,value,onChange}){
     </div>}
   </div>;
 }
-function MapPanel({geo,rows,selectedMunicipio}){
-  const target=useRef(null);
-  const data=useMemo(()=>{
-    if(!geo||!rows.length)return null;
-    const mapRows=new Map(rows.map(x=>[x.ibge,x]));
-    const features=geo.features.map(f=>{
-      const p=f.properties||{};
-      const code=String(p.CD_MUN||p.id||f.id||'').trim();
-      return {...f,properties:{...p,name:p.NM_MUN||p.name||code,__ibge:code}};
-    });
-    const records=features.map(f=>{
-      const code=f.properties.__ibge,r=mapRows.get(code);
-      return {name:f.properties.name,value:r?.cobertura??0,
-              itemStyle:{areaColor:selectedMunicipio && code!==selectedMunicipio?'#e4e9f1':(r?.cobertura?P.green:P.red)}};
-    });
-    return {features,records};
-  },[geo,rows,selectedMunicipio]);
-  useEffect(()=>{
-    if(!target.current||!data)return;
-    const chart=echarts.init(target.current);
-    echarts.registerMap('para-poc',{type:'FeatureCollection',features:data.features});
-    chart.setOption({
-      backgroundColor:'transparent',
-      tooltip:{trigger:'item',formatter:p=>{
-        const feature=data.features.find(f=>f.properties.name===p.name);
-        const r=rows.find(x=>x.ibge===feature?.properties.__ibge);
-        return [p.name,r?.cobertura?'Com transmissão identificada':'Sem transmissão identificada',
-                'CNES distintos: '+n(r?.cnes)].join('<br/>');
-      }},
-      series:[{type:'map',map:'para-poc',roam:false,
-               // O ECharts usa 0.75 por padrão para mapas GeoJSON, estreitando
-               // artificialmente o Pará. Como ele está próximo ao Equador,
-               // 1.0 preserva melhor as proporções dos limites municipais.
-               aspectScale:1,
-
-               emphasis:{label:{show:false},itemStyle:{areaColor:'#f4c54b'}},
-               itemStyle:{borderColor:'#fff',borderWidth:.65},
-               selectedMode:false,
-               data:data.records,
-               layoutCenter:['50%','50%'],layoutSize:'96%'}]
-    });
-    const resize=()=>chart.resize();
-    const observer=new ResizeObserver(resize);observer.observe(target.current);
-    return()=>{observer.disconnect();chart.dispose()};
-  },[data,rows]);
-  return <div className="map" ref={target}/>;
-}
 function App(){
  const [geo,setGeo]=useState(null),[payload,setPayload]=useState(null),
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
        [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
        [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
-       [dataFim,setDataFim]=useState(''),[tipoMapa,setTipoMapa]=useState('regioes');
+       [dataFim,setDataFim]=useState('');
  const refresh=async()=>{
   try{
    const params=new URLSearchParams();
@@ -152,7 +105,7 @@ function App(){
    <article><h3>{municipio?'Cobertura do município':'Cobertura estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
   </section>
   <section className="boards">
-    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2><div className="map-switch" role="group" aria-label="Tipo de mapa"><button type="button" aria-pressed={tipoMapa==='regioes'} className={tipoMapa==='regioes'?'active':''} onClick={()=>setTipoMapa('regioes')}>Mapa simples</button><button type="button" aria-pressed={tipoMapa==='osm'} className={tipoMapa==='osm'?'active':''} onClick={()=>setTipoMapa('osm')}>OpenStreetMap</button></div></div><div className="map-area">{tipoMapa==='osm'?<MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio}/>:<MapPanel geo={geo} rows={rows} selectedMunicipio={municipio}/>}</div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
       <article><h2>◷ Situação dos Municípios</h2><div ref={chartRef} className="donut"/></article>
       <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
