@@ -220,7 +220,7 @@ function App(){
       </article>
     </div>
   </section>
-  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Último recebimento no recorte':'Último recebimento na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES Setembro/2026</a></p>
+  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Último recebimento no recorte':'Último recebimento na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES Setembro/2026</a> · <a href="https://pec.centralizador.saude.pa.gov.br" target="_blank" rel="noopener noreferrer">Centralizador Estadual</a></p>
  </main></>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
