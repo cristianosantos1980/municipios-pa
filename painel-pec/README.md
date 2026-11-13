@@ -48,7 +48,7 @@ cd painel-pec
 docker compose -f compose.yaml up -d --build
 ```
 
-A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. O frontend lê o GeoJSON do repositório, sem download adicional.
+A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. O rodapé exibe o último recebimento encontrado em `ultima_transmissao` da resposta da Analytics, com data e hora disponíveis. Esse instante **não é o horário do ETL** nem o horário da consulta ao painel. Se houver filtros de município, versão ou período, o valor é o maior recebimento do recorte; na ausência de dados aparece `Sem dados`. O frontend lê o GeoJSON do repositório, sem download adicional.
 
 ## Mapa com OpenStreetMap
 
