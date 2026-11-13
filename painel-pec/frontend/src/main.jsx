@@ -1,6 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import * as echarts from 'echarts';
+import MapaOSM from './MapaOSM';
 import './style.css';
 
 const n=x=>new Intl.NumberFormat('pt-BR').format(x??0);
@@ -95,7 +96,7 @@ function App(){
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
        [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
        [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
-       [dataFim,setDataFim]=useState('');
+       [dataFim,setDataFim]=useState(''),[tipoMapa,setTipoMapa]=useState('regioes');
  const refresh=async()=>{
   try{
    const params=new URLSearchParams();
@@ -151,7 +152,7 @@ function App(){
    <article><h3>{municipio?'Cobertura do município':'Cobertura estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
   </section>
   <section className="boards">
-    <article className="geo"><h2>▱ Cobertura Territorial por Município</h2><div className="map-area"><MapPanel geo={geo} rows={rows} selectedMunicipio={municipio}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2><div className="map-switch" role="group" aria-label="Tipo de mapa"><button type="button" aria-pressed={tipoMapa==='regioes'} className={tipoMapa==='regioes'?'active':''} onClick={()=>setTipoMapa('regioes')}>Mapa simples</button><button type="button" aria-pressed={tipoMapa==='osm'} className={tipoMapa==='osm'?'active':''} onClick={()=>setTipoMapa('osm')}>OpenStreetMap</button></div></div><div className="map-area">{tipoMapa==='osm'?<MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio}/>:<MapPanel geo={geo} rows={rows} selectedMunicipio={municipio}/>}</div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
       <article><h2>◷ Situação dos Municípios</h2><div ref={chartRef} className="donut"/></article>
       <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
