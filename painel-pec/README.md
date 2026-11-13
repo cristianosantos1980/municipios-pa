@@ -1,6 +1,6 @@
 # POC — Cobertura Municipal PEC e-SUS APS — Pará
 
-Projeto experimental de painel institucional com **React + Apache ECharts + FastAPI + PostgreSQL** e Docker Compose. Usa diretamente o `PARA.geojson` da raiz deste repositório (propriedades `CO_MUN` e `NM_MUN`).
+Projeto experimental de painel institucional com **React + Apache ECharts + FastAPI + PostgreSQL** e Docker Compose. Usa diretamente o `PARA.geojson` da raiz deste repositório (propriedades `CD_MUN` e `NM_MUN`).
 
 ## Instalação no devops1
 
