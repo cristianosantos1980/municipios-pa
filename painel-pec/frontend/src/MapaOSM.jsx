@@ -7,133 +7,170 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
 })[char]);
 
-/**
- * OpenStreetMap como camada de fundo; polígonos dos 144 municípios são
- * carregados exclusivamente do GeoJSON versionado do projeto.
- */
-export default function MapaOSM({geo, rows, selectedMunicipio}) {
-  const el = useRef(null);
-  const mapRef = useRef(null);
-  const layerRef = useRef(null);
-  const pinsRef = useRef(null);
+function pinIcon(positive, isUnit=false) {
+  const color=positive ? COLORS.yes : COLORS.no;
+  return L.divIcon({
+    className:'pec-marker'+(isUnit?' pec-marker-unit':''),
+    iconSize:[isUnit?26:30,isUnit?36:42],
+    iconAnchor:[isUnit?13:15,isUnit?36:42],
+    popupAnchor:[0,-36],
+    html:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 48" aria-hidden="true">'+
+      '<path d="M18 1C8.5 1 1 8.4 1 18c0 13 17 28.5 17 28.5S35 31 35 18C35 8.4 27.5 1 18 1Z" fill="'+color+'" stroke="#fff" stroke-width="2"/>'+
+      '<circle cx="18" cy="17.5" r="7" fill="white"/>'+
+      (isUnit?'<path d="M18 13v9M13.5 17.5h9" stroke="'+color+'" stroke-width="2.4" stroke-linecap="round"/>':'')+
+      '</svg>'
+  });
+}
 
-  useEffect(() => {
-    if (!el.current) return;
-    const map = L.map(el.current, {
-      zoomControl: true,
-      scrollWheelZoom: true,
-      zoomSnap: .5,
-      zoomDelta: .5,
-      wheelPxPerZoomLevel: 100,
-      preferCanvas: true
+/** Os polígonos são do PARA.geojson; os pins das unidades são coordenadas CNES. */
+export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], selectedUnidade=''}) {
+  const el=useRef(null);
+  const mapRef=useRef(null);
+  const polygonRef=useRef(null);
+  const municipioPinsRef=useRef(null);
+  const unidadePinsRef=useRef(null);
+  const unidadeMarkerByCnesRef=useRef(new Map());
+
+  useEffect(()=>{
+    if(!el.current)return;
+    const map=L.map(el.current,{
+      zoomControl:true,scrollWheelZoom:true,zoomSnap:.5,zoomDelta:.5,
+      wheelPxPerZoomLevel:100,preferCanvas:true
     });
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
-      minZoom: 3,
-      maxZoom: 17
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      minZoom:3,maxZoom:17
     }).addTo(map);
-    map.setView([-3.75, -52.4], 6);
-    mapRef.current = map;
-    // Leaflet exige reavaliar as dimensões após o componente ser montado.
-    const observer = new ResizeObserver(() => map.invalidateSize({pan:false}));
+    map.setView([-3.75,-52.4],6);
+    mapRef.current=map;
+    const observer=new ResizeObserver(()=>map.invalidateSize({pan:false}));
     observer.observe(el.current);
-    return () => {
+    return()=>{
       observer.disconnect();
       map.remove();
-      mapRef.current = null;
-      layerRef.current = null;
-      pinsRef.current = null;
+      mapRef.current=null;
+      polygonRef.current=null;
+      municipioPinsRef.current=null;
+      unidadePinsRef.current=null;
+      unidadeMarkerByCnesRef.current.clear();
     };
-  }, []);
+  },[]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !geo || !rows.length) return;
-    if (layerRef.current) map.removeLayer(layerRef.current);
-    if (pinsRef.current) map.removeLayer(pinsRef.current);
-    const byCode = new Map(rows.map(row => [row.ibge, row]));
-    const layer = L.geoJSON(geo, {
-      style: feature => {
-        const code = String(feature.properties?.CD_MUN ?? '').trim();
-        const row = byCode.get(code);
-        const selected = !selectedMunicipio || code === selectedMunicipio;
+  useEffect(()=>{
+    const map=mapRef.current;
+    if(!map||!geo||!rows.length)return;
+    if(polygonRef.current)map.removeLayer(polygonRef.current);
+    if(municipioPinsRef.current)map.removeLayer(municipioPinsRef.current);
+    const byCode=new Map(rows.map(row=>[row.ibge,row]));
+    const polygons=L.geoJSON(geo,{
+      style:feature=>{
+        const code=String(feature.properties?.CD_MUN??'').trim();
+        const row=byCode.get(code);
+        const selected=!selectedMunicipio||code===selectedMunicipio;
         return {
-          color: selectedMunicipio && code === selectedMunicipio ? '#133c69' : '#ffffff',
-          weight: selectedMunicipio && code === selectedMunicipio ? 2.3 : .8,
-          opacity: 1,
-          fillColor: !selected ? COLORS.muted : row?.cobertura ? COLORS.yes : COLORS.no,
-          fillOpacity: selected ? .63 : .32
+          color:selectedMunicipio&&code===selectedMunicipio?'#17365b':'#fff',
+          weight:selectedMunicipio&&code===selectedMunicipio?2.3:.8,
+          opacity:1,
+          fillColor:!selected?COLORS.muted:(row?.cobertura?COLORS.yes:COLORS.no),
+          fillOpacity:selected?.62:.28
         };
       },
-      onEachFeature: (feature, polygon) => {
-        const code = String(feature.properties?.CD_MUN ?? '').trim();
-        const row = byCode.get(code);
-        const name = feature.properties?.NM_MUN || row?.municipio || code;
-        const status = row?.cobertura ? 'Com transmissão identificada' : 'Sem transmissão identificada';
-        polygon.bindTooltip('<strong>' + esc(name) + '</strong><br>' +
-          esc(status) + '<br>CNES distintos: ' + (row?.cnes ?? 0), {sticky:true});
-        polygon.on('mouseover', () => polygon.setStyle({weight:2,fillOpacity:.85}));
-        polygon.on('mouseout', () => layer.resetStyle(polygon));
+      onEachFeature:(feature,polygon)=>{
+        const code=String(feature.properties?.CD_MUN??'').trim();
+        const row=byCode.get(code);
+        const name=feature.properties?.NM_MUN||row?.municipio||code;
+        polygon.bindTooltip('<strong>'+esc(name)+'</strong><br>'+
+          (row?.cobertura?'Com transmissão identificada':'Sem transmissão identificada')+
+          '<br>CNES distintos: '+(row?.cnes??0),{sticky:true});
+        polygon.on('mouseover',()=>polygon.setStyle({weight:2,fillOpacity:.82}));
+        polygon.on('mouseout',()=>polygons.resetStyle(polygon));
       }
     }).addTo(map);
-    layerRef.current = layer;
+    polygonRef.current=polygons;
 
-    // Os pins mostram o estado de cobertura por município; não são
-    // estabelecimentos CNES nem representam a sede administrativa exata.
-    // Para evitar poluição visual no panorama estadual, surgem com zoom >= 7.
-    const markers = L.layerGroup().addTo(map);
-    pinsRef.current = markers;
-    const pins = layer.getLayers().map(polygon => {
-      const code = String(polygon.feature?.properties?.CD_MUN ?? '').trim();
-      const row = byCode.get(code);
-      const name = polygon.feature?.properties?.NM_MUN || row?.municipio || code;
-      const point = typeof polygon.getCenter === 'function'
-        ? polygon.getCenter() : polygon.getBounds().getCenter();
-      const color = row?.cobertura ? COLORS.yes : COLORS.no;
-      const marker = L.circleMarker(point, {
-        radius: 6, color: '#ffffff', weight: 1.6,
-        fillColor: color, fillOpacity: .98
+    const layerMunicipios=L.layerGroup().addTo(map);
+    municipioPinsRef.current=layerMunicipios;
+    const pins=polygons.getLayers().map(polygon=>{
+      const code=String(polygon.feature?.properties?.CD_MUN??'').trim();
+      const row=byCode.get(code);
+      const name=polygon.feature?.properties?.NM_MUN||row?.municipio||code;
+      // Ponto representativo do município; NÃO corresponde à sede ou unidade.
+      const point=polygon.getBounds().getCenter();
+      const marker=L.marker(point,{icon:pinIcon(Boolean(row?.cobertura))});
+      marker.bindPopup('<strong>'+esc(name)+'</strong><br>'+
+        (row?.cobertura?'Com transmissão identificada':'Sem transmissão identificada'));
+      marker.on('click',()=>{
+        map.flyTo(point,Math.max(map.getZoom()+1,9),{duration:.45});
       });
-      marker.bindTooltip('<strong>' + esc(name) + '</strong><br>' +
-        (row?.cobertura ? 'Com transmissão identificada' : 'Sem transmissão identificada'),
-        {direction:'top',offset:[0,-6]});
-      marker.on('click', () => {
-        map.flyTo(point, Math.max(map.getZoom() + 1.5, 9), {duration:.45});
-        marker.openTooltip();
-      });
-      return {marker,code};
+      return {code,marker};
     });
-    const atualizaPins = () => {
-      const zoom = map.getZoom();
-      markers.clearLayers();
-      if (zoom < 7 && !selectedMunicipio) return;
-      for (const {marker,code} of pins) {
-        if (selectedMunicipio && code !== selectedMunicipio) continue;
-        marker.setRadius(zoom >= 10 ? 9 : zoom >= 8 ? 7 : 5);
-        markers.addLayer(marker);
-      }
+    const updatePins=()=>{
+      layerMunicipios.clearLayers();
+      if(map.getZoom()<7&&!selectedMunicipio)return;
+      pins.forEach(({code,marker})=>{
+        if(!selectedMunicipio||code===selectedMunicipio)layerMunicipios.addLayer(marker);
+      });
     };
-    map.on('zoomend', atualizaPins);
-    const bounds=layer.getBounds();
-    if (bounds.isValid()) {
-      if (selectedMunicipio) {
-        const target = layer.getLayers().find(x =>
-          String(x.feature?.properties?.CD_MUN ?? '').trim() === selectedMunicipio
-        );
-        if (target) map.fitBounds(target.getBounds(), {padding:[35,35],maxZoom:10,animate:false});
-      } else {
-        map.fitBounds(bounds,{padding:[18,18],animate:false});
-      }
+    map.on('zoomend',updatePins);
+    const bounds=polygons.getBounds();
+    if(bounds.isValid()){
+      if(selectedMunicipio){
+        const target=polygons.getLayers().find(p=>
+          String(p.feature?.properties?.CD_MUN??'').trim()===selectedMunicipio);
+        if(target)map.fitBounds(target.getBounds(),{padding:[35,35],maxZoom:10,animate:false});
+      }else map.fitBounds(bounds,{padding:[18,18],animate:false});
     }
-    atualizaPins();
-    return () => {
-      map.off('zoomend', atualizaPins);
-      if (map.hasLayer(markers)) map.removeLayer(markers);
-      if (map.hasLayer(layer)) map.removeLayer(layer);
-      if (pinsRef.current === markers) pinsRef.current = null;
-      if (layerRef.current === layer) layerRef.current = null;
+    updatePins();
+    return()=>{
+      map.off('zoomend',updatePins);
+      if(map.hasLayer(layerMunicipios))map.removeLayer(layerMunicipios);
+      if(map.hasLayer(polygons))map.removeLayer(polygons);
+      if(municipioPinsRef.current===layerMunicipios)municipioPinsRef.current=null;
+      if(polygonRef.current===polygons)polygonRef.current=null;
     };
-  }, [geo,rows,selectedMunicipio]);
+  },[geo,rows,selectedMunicipio]);
 
-  return <div ref={el} className="osm-map" aria-label="Mapa navegável do Pará com cobertura municipal"/>;
+  useEffect(()=>{
+    const map=mapRef.current;
+    if(!map)return;
+    if(unidadePinsRef.current)map.removeLayer(unidadePinsRef.current);
+    unidadeMarkerByCnesRef.current.clear();
+    if(!selectedMunicipio||!unidades.length)return;
+    const layer=L.layerGroup().addTo(map);
+    unidadePinsRef.current=layer;
+    for(const unidade of unidades){
+      const {latitude,longitude,cnes}=unidade;
+      if(typeof latitude!=='number'||typeof longitude!=='number')continue;
+      if(!Number.isFinite(latitude)||!Number.isFinite(longitude))continue;
+      const marker=L.marker([latitude,longitude],{
+        icon:pinIcon(Boolean(unidade.possui_transmissao),true),
+        zIndexOffset:500
+      });
+      const status=unidade.possui_transmissao?'Com transmissão identificada':'Sem transmissão identificada';
+      marker.bindPopup('<strong>'+esc(unidade.estabelecimento)+'</strong><br>'+
+        'CNES: '+esc(cnes)+'<br>'+status+
+        (unidade.ultima_transmissao?'<br>Última transmissão: '+esc(unidade.ultima_transmissao):''));
+      marker.addTo(layer);
+      unidadeMarkerByCnesRef.current.set(cnes,marker);
+    }
+    return()=>{
+      if(map.hasLayer(layer))map.removeLayer(layer);
+      if(unidadePinsRef.current===layer)unidadePinsRef.current=null;
+      unidadeMarkerByCnesRef.current.clear();
+    };
+  },[selectedMunicipio,unidades]);
+
+  useEffect(()=>{
+    const map=mapRef.current;
+    if(!map||!selectedUnidade)return;
+    const unidade=unidades.find(u=>u.cnes===selectedUnidade);
+    if(!unidade||unidade.latitude==null||unidade.longitude==null)return;
+    const latlng=[unidade.latitude,unidade.longitude];
+    map.flyTo(latlng,Math.max(map.getZoom(),13),{duration:.6});
+    const marker=unidadeMarkerByCnesRef.current.get(selectedUnidade);
+    if(marker)marker.openPopup();
+  },[selectedUnidade,unidades]);
+
+  return <div ref={el} className="osm-map"
+    aria-label="Mapa navegável do Pará com municípios e unidades CNES georreferenciadas"/>;
 }
