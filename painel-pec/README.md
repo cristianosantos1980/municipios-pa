@@ -71,7 +71,7 @@ Os filtros **Município** e **Unidade de Saúde** funcionam nos dois sentidos. �
 - O serviço não consulta registros assistenciais, não grava dados no PostgreSQL e não altera Apache Hop.
 - Como posição geográfica cadastral pode estar incorreta ou desatualizada, verificar qualidade de latitude/longitude antes de divulgar a localização ao público.
 
-**Testes rápidos após atualizar:** selecionar Colares, confirmar lista de unidades, escolher unidade com coordenadas, observar aproximação e popup com nome/CNES/status; mudar versão PEC ou período e conferir as cores; limpar filtros e confirmar a visão dos 144 municípios.
+**Testes rápidos após atualizar:** selecionar Colares, confirmar lista de unidades, escolher unidade com coordenadas, observar aproximação e popup com nome/CNES/status; limpar somente a unidade pelo `×` e confirmar que a lista de unidades de Colares reaparece, sem perder o município; selecionar outra unidade; mudar versão PEC ou período e conferir as cores; limpar filtros e confirmar a visão dos 144 municípios. A pesquisa estadual por nome/CNES continua disponível quando o usuário digita no campo.
 
 ## Filtros
 
