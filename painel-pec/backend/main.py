@@ -50,6 +50,16 @@ def coverage():
           AND cnes IS NOT NULL
         GROUP BY municipio_ibge_cnes
         """
+        # O cadastro da Analytics usa IBGE municipal de 6 dígitos,
+        # enquanto o GeoJSON traz o código IBGE completo de 7 dígitos
+        # (com dígito verificador). Relacionar pelo prefixo de 6 dígitos
+        # é seguro após validar que cada prefixo é único no GeoJSON.
+        codigo_geojson_por_6 = {}
+        for codigo_7 in base:
+            codigo_6 = codigo_7[:6]
+            if codigo_6 in codigo_geojson_por_6:
+                raise HTTPException(500, "GeoJSON contém prefixos IBGE de 6 dígitos duplicados")
+            codigo_geojson_por_6[codigo_6] = codigo_7
         try:
             with psycopg.connect(
                 host=os.environ["PGHOST"],port=int(os.getenv("PGPORT","5433")),
@@ -61,8 +71,18 @@ def coverage():
                 with conn.cursor() as cur:
                     cur.execute(sql)
                     for ibge,cnes,ultima in cur.fetchall():
-                        code=str(ibge).strip()
-                        if code in base: matched[code]={"cnes":cnes,"ultima":ultima.isoformat() if ultima else None}
+                        codigo_origem = str(ibge).strip()
+                        if len(codigo_origem) == 6 and codigo_origem.isdigit():
+                            code = codigo_geojson_por_6.get(codigo_origem)
+                        elif len(codigo_origem) == 7 and codigo_origem.isdigit() and codigo_origem in base:
+                            code = codigo_origem
+                        else:
+                            code = None
+                        if code:
+                            matched[code] = {
+                                "cnes": cnes,
+                                "ultima": ultima.isoformat() if ultima else None
+                            }
         except Exception as exc:
             raise HTTPException(503,"Não foi possível consultar a Analytics; verifique logs internos e credenciais de leitura")
     else: raise HTTPException(500,"DATA_MODE inválido")
