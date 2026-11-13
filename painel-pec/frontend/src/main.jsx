@@ -45,10 +45,10 @@ function MunicipioPesquisa({rows,value,onChange}){
   </div>;
 }
 function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}){
- const [texto,setTexto]=useState(''),[aberto,setAberto]=useState(false),[busca,setBusca]=useState([]),[buscando,setBuscando]=useState(false),[erroBusca,setErroBusca]=useState('');
+ const [texto,setTexto]=useState(''),[aberto,setAberto]=useState(false),[busca,setBusca]=useState([]),[buscando,setBuscando]=useState(false),[erroBusca,setErroBusca]=useState(''),[buscaDigitada,setBuscaDigitada]=useState(false);
  const local=useMemo(()=>{const termo=normalizar(texto.trim());return termo?unidades.filter(u=>normalizar(u.estabelecimento+' '+u.cnes).includes(termo)):unidades},[unidades,texto]);
  useEffect(()=>{
-   if(municipio||!aberto||texto.trim().length<3){setBusca([]);setBuscando(false);setErroBusca('');return}
+   if(!buscaDigitada||!aberto||texto.trim().length<3){setBusca([]);setBuscando(false);setErroBusca('');return}
    const controller=new AbortController();
    const timer=setTimeout(()=>{
      setBuscando(true);
@@ -59,28 +59,28 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
        .finally(()=>{if(!controller.signal.aborted)setBuscando(false)});
    },350);
    return()=>{clearTimeout(timer);controller.abort()};
- },[municipio,aberto,texto]);
+ },[buscaDigitada,aberto,texto]);
  useEffect(()=>{if(!value){setTexto('');return}const u=unidades.find(u=>u.cnes===value);if(u)setTexto(u.estabelecimento)},[value,unidades]);
- const escolher=u=>{setTexto(u?.estabelecimento||'');setAberto(false);onSelecionar(u||null)};
- const opcoes=municipio?local:busca;
+ const escolher=u=>{setTexto(u?.estabelecimento||'');setAberto(false);setBuscaDigitada(false);onSelecionar(u||null)};
+ const opcoes=buscaDigitada?busca:(municipio?local:[]);
  return <div className="municipio-picker unidade-picker">
   <input type="text" autoComplete="off" role="combobox" aria-autocomplete="list"
     aria-expanded={aberto} aria-controls="unidades-opcoes" aria-label="Pesquisar unidade de saúde"
     value={texto} placeholder="Nome da unidade ou CNES..." onFocus={()=>setAberto(true)}
-    onBlur={()=>setAberto(false)} onChange={e=>{setTexto(e.target.value);setAberto(true)}}
+    onBlur={()=>setAberto(false)} onChange={e=>{setTexto(e.target.value);setBuscaDigitada(true);setAberto(true)}}
     onKeyDown={e=>{if(e.key==='Escape')setAberto(false);if(e.key==='Enter'&&aberto&&opcoes.length){e.preventDefault();escolher(opcoes[0])}}}/>
   {(texto||value)&&<button type="button" className="municipio-clear" aria-label="Limpar unidade" onMouseDown={e=>e.preventDefault()} onClick={()=>escolher(null)}>×</button>}
   {aberto&&<div className="municipio-options" id="unidades-opcoes" role="listbox">
-    {!municipio&&texto.trim().length<3&&<div className="municipio-empty">Digite ao menos 3 caracteres para buscar em todo o Pará.</div>}
-    {municipio&&carregando&&<div className="municipio-empty">Carregando unidades...</div>}
-    {municipio&&erro&&<div className="municipio-empty">{erro}</div>}
-    {!municipio&&buscando&&<div className="municipio-empty">Pesquisando unidades...</div>}
+    {!municipio&&(!buscaDigitada||texto.trim().length<3)&&<div className="municipio-empty">Digite ao menos 3 caracteres para buscar em todo o Pará.</div>}
+    {municipio&&!buscaDigitada&&carregando&&<div className="municipio-empty">Carregando unidades...</div>}
+    {municipio&&!buscaDigitada&&erro&&<div className="municipio-empty">{erro}</div>}
+    {buscaDigitada&&buscando&&<div className="municipio-empty">Pesquisando unidades...</div>}
     {erroBusca&&<div className="municipio-empty">{erroBusca}</div>}
     {opcoes.map(u=><button type="button" role="option" aria-selected={value===u.cnes} key={(u.municipio_ibge||municipio||'')+'-'+u.cnes}
       onMouseDown={e=>{e.preventDefault();escolher(u)}}>{u.estabelecimento} — CNES {u.cnes}
-      {!municipio&&<small> · {u.municipio_nome}</small>}
-      {municipio&&u.latitude==null&&<small> · sem coordenadas</small>}</button>)}
-    {!buscando&&!carregando&&!erroBusca&&!erro&&opcoes.length===0&&(municipio||texto.trim().length>=3)&&<div className="municipio-empty">Nenhuma unidade encontrada.</div>}
+      {buscaDigitada&&<small> · {u.municipio_nome}</small>}
+      {municipio&&!buscaDigitada&&u.latitude==null&&<small> · sem coordenadas</small>}</button>)}
+    {!buscando&&(!carregando||buscaDigitada)&&!erroBusca&&(!erro||buscaDigitada)&&opcoes.length===0&&(municipio||(buscaDigitada&&texto.trim().length>=3))&&<div className="municipio-empty">Nenhuma unidade encontrada.</div>}
   </div>}
  </div>;
 }
@@ -156,7 +156,7 @@ function App(){
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(!municipio&&u.municipio_ibge)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('');setUnidade('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('');setUnidade('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
