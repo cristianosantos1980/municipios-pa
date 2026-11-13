@@ -58,7 +58,7 @@ def versions():
 
 @app.get("/api/unidades")
 def unidades(
-    municipio: str = Query(min_length=7, max_length=7, pattern=r"^15\\d{5}$"),
+    municipio: str = Query(min_length=7, max_length=7, pattern=r"^15[0-9]{5}$"),
     versao: str | None = Query(default=None, max_length=40),
     data_inicio: date | None = None,
     data_fim: date | None = None,
