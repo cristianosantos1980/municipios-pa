@@ -12,3 +12,12 @@
 /* Situação do município selecionado */
 .pill-ok{background:#dff5e7;color:#17683a}
 .filters select[aria-label="Selecionar município"]{min-width:230px;max-width:300px}
+
+/* Pesquisa de município: 144 opções, sem dependências externas */
+.municipio-picker{position:relative;min-width:250px;max-width:310px}
+.filters .municipio-picker input{width:100%;min-width:250px;max-width:310px;padding-right:34px}
+.municipio-clear{position:absolute;right:5px;top:4px;border:0!important;background:transparent!important;min-width:28px;padding:0 7px!important;font-size:21px;line-height:28px;color:#62738d;cursor:pointer;height:30px!important}
+.municipio-options{position:absolute;z-index:50;top:calc(100% + 4px);left:0;right:0;max-height:270px;overflow-y:auto;background:#fff;border:1px solid #c8d4e2;border-radius:7px;box-shadow:0 8px 20px #152f5240}
+.municipio-options button{display:block;width:100%;max-width:none;min-width:0;height:auto!important;text-align:left;border:0!important;border-radius:0!important;background:#fff!important;padding:9px 12px!important;font-size:14px;color:#172b4c;cursor:pointer;white-space:normal}
+.municipio-options button:hover,.municipio-options button[aria-selected=true]{background:#e9f1ff!important}
+.municipio-empty{padding:12px;color:#63758d;font-size:13px}
