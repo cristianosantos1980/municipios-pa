@@ -72,7 +72,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
           weight:selectedMunicipio&&code===selectedMunicipio?2.3:.8,
           opacity:1,
           fillColor:!selected?COLORS.muted:(row?.cobertura?COLORS.yes:COLORS.no),
-          fillOpacity:selected?.62:.28
+          fillOpacity: selected ? 0.62 : 0.28
         };
       },
       onEachFeature:(feature,polygon)=>{
