@@ -49,7 +49,10 @@ function App(){
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
        [lastRefresh,setLastRefresh]=useState(null),[versao,setVersao]=useState(''),
        [versoes,setVersoes]=useState([]),[dataInicio,setDataInicio]=useState(''),
-       [dataFim,setDataFim]=useState('');
+       [dataFim,setDataFim]=useState(''),
+       [unidade,setUnidade]=useState(''),[unidades,setUnidades]=useState([]),
+       [carregandoUnidades,setCarregandoUnidades]=useState(false),
+       [erroUnidades,setErroUnidades]=useState('');
  const refresh=async()=>{
   try{
    const params=new URLSearchParams();
@@ -63,6 +66,27 @@ function App(){
  };
  useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
  useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
+ useEffect(()=>{
+   setUnidade('');
+   setUnidades([]);
+   setErroUnidades('');
+   if(!municipio)return;
+   const controller=new AbortController();
+   setCarregandoUnidades(true);
+   const params=new URLSearchParams({municipio});
+   if(versao)params.set('versao',versao);
+   if(dataInicio)params.set('data_inicio',dataInicio);
+   if(dataFim)params.set('data_fim',dataFim);
+   fetch('/api/unidades?'+params.toString(),{signal:controller.signal,cache:'no-store'})
+     .then(async response=>{
+       if(!response.ok)throw new Error('Não foi possível consultar unidades (HTTP '+response.status+')');
+       return response.json();
+     })
+     .then(data=>setUnidades(data.unidades||[]))
+     .catch(e=>{if(e.name!=='AbortError')setErroUnidades(e.message)})
+     .finally(()=>{if(!controller.signal.aborted)setCarregandoUnidades(false)});
+   return()=>controller.abort();
+ },[municipio,versao,dataInicio,dataFim,lastRefresh]);
  const rows=payload?.municipios||[];
  const filtered=useMemo(()=>municipio?rows.filter(r=>r.ibge===municipio):rows,[rows,municipio]);
  const summary=useMemo(()=>{
@@ -93,11 +117,13 @@ function App(){
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={setMunicipio}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={setMunicipio}/></label><label>Unidade de Saúde <select aria-label="Selecionar unidade de saúde" value={unidade} disabled={!municipio||carregandoUnidades||Boolean(erroUnidades)} onChange={e=>setUnidade(e.target.value)}><option value="">{!municipio?'Selecione o município':carregandoUnidades?'Carregando unidades...':erroUnidades?'Consulta indisponível':'Todas as unidades ('+unidades.length+')'}</option>{unidades.map(u=><option key={u.cnes} value={u.cnes}>{u.estabelecimento} — CNES {u.cnes}{u.latitude==null?' (sem coordenadas)':''}</option>)}</select></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label>Data inicial <input aria-label="Data inicial de transmissão" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Data final <input aria-label="Data final de transmissão" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label><button onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setMunicipio('');setUnidade('')}}>Limpar filtros</button><button onClick={refresh}>↻ Atualizar</button></section>
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
+  {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
   {(versao||dataInicio||dataFim)&&<div className="filter-note">Cobertura considerando apenas os últimos recebimentos consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</div>}
-  {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). Os indicadores abaixo representam somente esse município; os demais aparecem em cinza no mapa.</div>}
+  {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam transmissão identificada na Analytics, não a situação cadastral do CNES.</div>}
+  {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
    <article><h3>{municipio?'Municípios selecionados':'Total de municípios do Pará'}</h3><strong>{n(summary.total)}</strong><span>{municipio?'Recorte do filtro municipal':'Referência municipal do GeoJSON'}</span></article>
    <article><h3>Municípios mapeados</h3><strong>{n(summary.mapeados)}</strong><span>Com transmissão identificada</span></article>
@@ -105,7 +131,7 @@ function App(){
    <article><h3>{municipio?'Cobertura do município':'Cobertura estadual'}</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></article>
   </section>
   <section className="boards">
-    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
+    <article className="geo"><div className="map-header"><h2>▱ Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com transmissão　 <span className="dot red"/> Sem transmissão</footer></article>
     <div className="right">
       <article><h2>◷ Situação dos Municípios</h2><div ref={chartRef} className="donut"/></article>
       <article><h2>☑ {municipio?'Situação do Município Selecionado':'Municípios sem Transmissão Identificada ('+missing.length+')'}</h2>
