@@ -1,8 +1,8 @@
 """POC SESPA: API apenas de leitura; sem DDL, INSERT ou UPDATE."""
-import os, json, hashlib
+import os, json
 from datetime import datetime
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 import psycopg
 
 app=FastAPI(title="Cobertura Municipal PEC — POC", docs_url=None, redoc_url=None)
@@ -11,14 +11,19 @@ GEO=Path(os.getenv("GEOJSON_PATH","/data/PARA.geojson"))
 def municipalities():
     data=json.loads(GEO.read_text(encoding="utf-8"))
     result={}
-    for f in data.get("features",[]):
-        p=f.get("properties") or {}
-        code=str(p.get("COD_MUN") or p.get("id") or f.get("id") or "").strip()
-        name=str(p.get("NM_MUN") or p.get("name") or code)
-        if len(code)!=7 or not code.isdigit() or code in result or not f.get("geometry"):
-            raise ValueError("GeoJSON: código IBGE duplicado/inválido ou geometria ausente")
-        result[code]=name
-    if len(result)!=144: raise ValueError(f"Esperados 144 municípios; encontrados {len(result)}")
+    for index, f in enumerate(data.get("features", []), start=1):
+        p = f.get("properties") or {}
+        code = str(p.get("COD_MUN") or p.get("id") or f.get("id") or "").strip()
+        name = str(p.get("NM_MUN") or p.get("name") or code).strip()
+        # A API utiliza apenas o código IBGE e o nome. Geometrias podem ser
+        # verificadas pelo frontend cartográfico, sem impedir os indicadores.
+        if not (len(code) == 7 and code.isdigit()):
+            raise ValueError(f"GeoJSON: código IBGE inválido na feição {index}: {code!r}")
+        if code in result:
+            raise ValueError(f"GeoJSON: IBGE duplicado na feição {index}: {code} ({name})")
+        result[code] = name
+    if len(result) != 144:
+        raise ValueError(f"GeoJSON: esperado 144 municípios, encontrados {len(result)}")
     return result
 
 @app.get("/api/health")
