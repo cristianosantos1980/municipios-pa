@@ -37,3 +37,8 @@
 .pec-marker-unit{z-index:1}
 .filters label:has(select[aria-label="Selecionar unidade de saúde"]){min-width:250px}
 .filters select[aria-label="Selecionar unidade de saúde"]{min-width:260px;max-width:340px;text-overflow:ellipsis}
+
+/* Busca estadual de estabelecimentos e vínculo bidirecional com município */
+.unidade-picker{min-width:275px;max-width:360px}
+.filters .unidade-picker input{min-width:275px;max-width:360px}
+.unidade-picker .municipio-options small{display:block;font-size:11px;color:#607a9b;margin-top:3px}
