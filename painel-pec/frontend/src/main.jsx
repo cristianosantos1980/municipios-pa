@@ -89,12 +89,22 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
    return()=>{clearTimeout(timer);controller.abort()};
  },[buscaDigitada,aberto,texto]);
  useEffect(()=>{if(!value){setTexto('');return}const u=unidades.find(u=>u.cnes===value);if(u)setTexto(u.estabelecimento)},[value,unidades]);
- const escolher=u=>{setTexto(u?.estabelecimento||'');setAberto(false);setBuscaDigitada(false);onSelecionar(u||null)};
+ const escolher=u=>{
+   const selecionada=u||null;
+   setTexto(selecionada?.estabelecimento||'');
+   setBuscaDigitada(false);
+   setBusca([]);
+   setErroBusca('');
+   setBuscando(false);
+   // Ao limpar uma unidade, exibir novamente a lista do município já selecionado.
+   setAberto(!selecionada&&Boolean(municipio));
+   onSelecionar(selecionada);
+ };
  const opcoes=buscaDigitada?busca:(municipio?local:[]);
  return <div className="municipio-picker unidade-picker">
   <input type="text" autoComplete="off" role="combobox" aria-autocomplete="list"
     aria-expanded={aberto} aria-controls="unidades-opcoes" aria-label="Pesquisar unidade de saúde"
-    value={texto} placeholder="Nome da unidade ou CNES..." onFocus={()=>setAberto(true)}
+    value={texto} placeholder="Nome da unidade ou CNES..." onFocus={()=>{setAberto(true);if(!value&&!texto.trim()){setBuscaDigitada(false);setBusca([]);setErroBusca('')}}}
     onBlur={()=>setAberto(false)} onChange={e=>{setTexto(e.target.value);setBuscaDigitada(true);setAberto(true)}}
     onKeyDown={e=>{if(e.key==='Escape')setAberto(false);if(e.key==='Enter'&&aberto&&opcoes.length){e.preventDefault();escolher(opcoes[0])}}}/>
   {(texto||value)&&<button type="button" className="municipio-clear" aria-label="Limpar unidade" onMouseDown={e=>e.preventDefault()} onClick={()=>escolher(null)}>×</button>}
