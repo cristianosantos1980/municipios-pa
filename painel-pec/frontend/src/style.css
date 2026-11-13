@@ -120,3 +120,11 @@ body{font-size:16px}
 .geo footer,.foot{font-size:14px}
 .municipio-options button,.municipio-empty{font-size:15px}
 @media(max-width:1150px){.metrics h3{font-size:15px}.metrics strong{font-size:34px}.metrics .metric-icon{flex-basis:48px;width:48px;height:48px}}
+
+/* Ícones compactos dos três títulos de seção e fonte CNES no rodapé */
+.boards .section-icon{width:32px;height:32px;flex:0 0 32px;border-radius:9px}
+.boards .section-icon svg{width:19px;height:19px}
+.boards .section-heading{gap:9px}
+.foot a{color:#1767bd;text-decoration:underline;text-underline-offset:3px;font-weight:650}
+.foot a:hover{color:#0d457f}
+.foot a:focus-visible{outline:2px solid #1767bd;outline-offset:3px}
