@@ -162,6 +162,12 @@ function App(){
  },[payload,municipio,filtered]);
  const missing=filtered.filter(x=>!x.cobertura);
  const selectedRow=municipio?rows.find(r=>r.ibge===municipio):null;
+ const ultimoRecebimento=useMemo(()=>filtered.reduce((latest,row)=>{
+   const value=row.ultima_transmissao;
+   return value&&(!latest||value>latest)?value:latest;
+ },null),[filtered]);
+ const ultimoRecebimentoFormatado=receberDataHora(ultimoRecebimento);
+ const recebimentoNoRecorte=Boolean(municipio||versao||dataInicio||dataFim);
  const recencia=useMemo(()=>recency.map(c=>({...c,count:filtered.filter(r=>category(r)===c.key).length,percentage:filtered.length?filtered.filter(r=>category(r)===c.key).length*100/filtered.length:0})),[filtered]);
  const selecionarPeriodo=value=>{
   setPeriodo(value);
@@ -202,7 +208,7 @@ function App(){
       </article>
     </div>
   </section>
-  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · Última consulta: {lastRefresh?.toLocaleString('pt-BR')||'—'} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES Setembro/2026</a></p>
+  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Último recebimento no recorte':'Último recebimento na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES Setembro/2026</a></p>
  </main></>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
