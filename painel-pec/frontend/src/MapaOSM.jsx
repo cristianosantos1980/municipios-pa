@@ -83,7 +83,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
         const row=byCode.get(code);
         const name=feature.properties?.NM_MUN||row?.municipio||code;
         polygon.bindTooltip('<strong>'+esc(name)+'</strong><br>'+
-          (row?.cobertura?'Com transmissão identificada':'Sem transmissão identificada')+
+          (row?.cobertura?'Com recepção de dados identificada':'Sem recepção de dados identificada')+
           '<br>CNES distintos: '+(row?.cnes??0),{sticky:true});
         polygon.on('mouseover',()=>polygon.setStyle({weight:2,fillOpacity:.82}));
         polygon.on('mouseout',()=>polygons.resetStyle(polygon));
@@ -101,7 +101,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       const point=polygon.getBounds().getCenter();
       const marker=L.marker(point,{icon:pinIcon(Boolean(row?.cobertura))});
       marker.bindPopup('<strong>'+esc(name)+'</strong><br>'+
-        (row?.cobertura?'Com transmissão identificada':'Sem transmissão identificada'));
+        (row?.cobertura?'Com recepção de dados identificada':'Sem recepção de dados identificada'));
       marker.on('click',()=>{
         map.flyTo(point,Math.max(map.getZoom()+1,9),{duration:.45});
       });
@@ -150,10 +150,10 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
         icon:pinIcon(Boolean(unidade.possui_transmissao),true),
         zIndexOffset:500
       });
-      const status=unidade.possui_transmissao?'Com transmissão identificada':'Sem transmissão identificada';
+      const status=unidade.possui_transmissao?'Com recepção de dados identificada':'Sem recepção de dados identificada';
       marker.bindPopup('<strong>'+esc(unidade.estabelecimento)+'</strong><br>'+
         'CNES: '+esc(cnes)+'<br>'+status+
-        (unidade.ultima_transmissao?'<br>Última transmissão: '+esc(unidade.ultima_transmissao):''));
+        (unidade.ultima_transmissao?'<br>Última recepção de dados: '+esc(unidade.ultima_transmissao):''));
       marker.addTo(layer);
       unidadeMarkerByCnesRef.current.set(String(cnes),marker);
     }
