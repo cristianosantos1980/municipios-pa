@@ -11,7 +11,7 @@ const recency=[{key:'recent',label:'Transmissão recente',detail:'Até 7 dias',i
 const category=row=>{const age=ageDays(row.ultima_transmissao);return !row.cobertura||age===null?'none':age<=7?'recent':age<=30?'attention':'late'};
 const receberDataHora=value=>{
   if(!value)return {data:null,hora:null};
-  const parts=String(value).match(/^(\\d{4})-(\\d{2})-(\\d{2})(?:[T ](\\d{2}):(\\d{2}))?/);
+    const parts=String(value).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
   if(!parts)return {data:null,hora:null};
   return {data:parts[3]+'/'+parts[2]+'/'+parts[1],hora:parts[4]?parts[4]+':'+parts[5]:null};
 };
