@@ -77,3 +77,46 @@
 .right{grid-template-rows:auto minmax(280px,1fr)}
 @media(max-width:1150px){.metrics article{padding:14px}.metrics .metric-icon{flex-basis:43px;height:43px}.metrics h3{font-size:12px}.metrics strong{font-size:31px}}
 @media(max-width:600px){.recency-grid{grid-template-columns:1fr}}
+
+/* Revisao de acessibilidade visual: tipografia, alinhamento e icones vetoriais */
+:root{font-size:16px}
+body{font-size:16px}
+.top{font-size:17px;padding:17px 28px}
+.top span:first-child{font-size:18px}
+.heading h1{font-size:31px}
+.heading p{font-size:20px}
+.filters label{font-size:15px;line-height:1.4}
+.filters input,.filters select,.filters button{font-size:15px;height:43px}
+.filters{gap:15px 19px}
+.filter-note,.warning,.error{font-size:15px;line-height:1.5}
+.boards h2{font-size:21px;line-height:1.32}
+.metrics article{display:flex;align-items:center;gap:15px;padding:20px 17px;min-height:132px}
+.metrics article>div{flex:1;min-width:0}
+.metrics h3{font-size:16px;line-height:1.3}
+.metrics strong{font-size:38px;line-height:1.1}
+.metrics span:not(.metric-icon){font-size:14px;line-height:1.4}
+.metrics .metric-icon,.recency-icon,.section-icon{display:flex;align-items:center;justify-content:center;line-height:0;padding:0;box-sizing:border-box}
+.metrics .metric-icon{width:56px;height:56px;flex:0 0 56px;border-radius:14px;overflow:hidden}
+.metrics .metric-icon svg,.recency-icon svg,.section-icon svg{display:block;flex:none;width:27px;height:27px;overflow:visible}
+.recency-icon{width:46px;height:46px;flex:0 0 46px;border-radius:12px;box-shadow:0 2px 8px #172b4c13}
+.recency-label strong{font-size:15px;line-height:1.35}
+.recency-label small,.recency-count small{font-size:13px}
+.recency-count strong{font-size:29px}
+.recency-card{gap:12px;padding:15px 13px}
+.section-heading{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-width:0}
+.section-icon{width:42px;height:42px;flex:0 0 42px;border-radius:12px;color:white;box-shadow:0 3px 10px #172b4c1b}
+.section-icon-map{background:linear-gradient(135deg,#39a8ff,#116cdb)}
+.section-icon-recency{background:linear-gradient(135deg,#8268fa,#553bd2)}
+.section-icon-alert{background:linear-gradient(135deg,#ff7e88,#d7354e)}
+.section-icon svg{width:25px;height:25px}
+.recency-grid{margin-top:5px}
+.table-wrap{max-height:340px;margin-top:12px;overflow:auto}
+.table-wrap table{min-width:680px;font-size:14px}
+.table-wrap th{font-size:14px;line-height:1.3;white-space:normal;position:sticky;top:0;z-index:1}
+.table-wrap td{font-size:14px;line-height:1.5;vertical-align:middle}
+.table-wrap th:nth-child(4),.table-wrap th:nth-child(5){min-width:110px}
+.pill{display:inline-flex;align-items:center;white-space:nowrap;font-weight:650}
+.no-data{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:5px 9px;background:#ffe6e8;border:1px solid #f5bec5;border-radius:999px;color:#a4232d;font-size:13px;font-weight:750}
+.geo footer,.foot{font-size:14px}
+.municipio-options button,.municipio-empty{font-size:15px}
+@media(max-width:1150px){.metrics h3{font-size:15px}.metrics strong{font-size:34px}.metrics .metric-icon{flex-basis:48px;width:48px;height:48px}}
