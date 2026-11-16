@@ -233,3 +233,33 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
   .boards .geo .map-area,.osm-map{height:300px;min-height:300px}
   .metrics article{gap:10px}
 }
+
+/* Seleção visual de período personalizado: dois calendários, sem entrada manual. */
+.custom-period{margin:-5px 0 17px;padding:17px 19px;background:#fff;border:1px solid #cddcf2;border-radius:12px;box-shadow:0 1px 3px #122b4720;max-width:760px}
+.custom-period-intro{display:flex;justify-content:space-between;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-bottom:14px;color:#203d62}
+.custom-period-intro strong{font-size:16px}
+.custom-period-intro span{font-size:13px;color:#61728a}
+.custom-period-calendars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.calendar-month{min-width:0;padding:13px;border-radius:11px;background:#f8fbff;border:1px solid #dce7f3}
+.calendar-month-heading{display:flex;justify-content:space-between;gap:9px;align-items:center;flex-wrap:wrap;line-height:1.3}
+.calendar-month-heading strong{font-size:15px;color:#13365c}
+.calendar-month-heading small{font-size:13px;font-weight:700;color:#3672af}
+.calendar-month-nav{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:10px 0 9px}
+.calendar-month-nav span{font-size:14px;font-weight:650;text-transform:capitalize;text-align:center;color:#234465}
+.calendar-month-nav button{width:34px;height:34px;flex:0 0 34px;padding:0;background:#fff;color:#205b95;border:1px solid #cbd9e9;border-radius:8px;font-size:25px;line-height:1;cursor:pointer}
+.calendar-month-nav button:hover{background:#e8f2ff}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;align-items:center}
+.calendar-weekday{font-weight:750;font-size:12px;text-align:center;color:#647890;padding:6px 0}
+.calendar-days button{width:100%;height:35px;min-width:0;border:1px solid transparent;border-radius:7px;background:transparent;color:#223d5e;font-size:13px;font-weight:600;padding:0;cursor:pointer}
+.calendar-days button:hover:not(:disabled){background:#dbeeff;border-color:#93c3f5;color:#124a80}
+.calendar-days button.calendar-day-selected{color:white;background:#1377cd;border-color:#1377cd}
+.calendar-days button:disabled{cursor:not-allowed;opacity:.3}
+.calendar-days button:focus-visible,.calendar-month-nav button:focus-visible{outline:3px solid #1a74c3;outline-offset:2px}
+.custom-period-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px 16px;margin-top:13px;font-size:13px;color:#61728a}
+.custom-period-footer strong{color:#17365b}
+@media(max-width:640px){
+  .custom-period{margin:-5px 0 15px;max-width:none;padding:13px}
+  .custom-period-calendars{grid-template-columns:minmax(0,1fr);gap:11px}
+  .calendar-month{padding:12px}
+  .calendar-days button{height:39px;font-size:14px}
+}
