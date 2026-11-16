@@ -122,46 +122,70 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
   </div>}
  </div>;
 }
-// Calendários visuais independentes: seleção por clique, sem exigir digitação de datas.
-const formatarDataISO=value=>value?value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4):'Não selecionada';
+// Calendário de intervalo único: os dois meses são uma janela sincronizada.
+// Datas só são aplicadas aos filtros após a confirmação, evitando consultas por clique.
+const formatarDataISO=value=>value?new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'long',year:'numeric'}).format(new Date(value+'T12:00:00')):'Selecione uma data';
 const primeiroDiaMes=valor=>{const d=valor?new Date(valor+'T12:00:00'):new Date();return new Date(d.getFullYear(),d.getMonth(),1)};
 const isoCalendario=(ano,mes,dia)=>String(ano).padStart(4,'0')+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
-function CalendarioMensal({titulo,value,min,max,inicioPeriodo,fimPeriodo,onChange,initialMonth}){
- const [mes,setMes]=useState(()=>primeiroDiaMes(value||initialMonth));
- const ano=mes.getFullYear(),indiceMes=mes.getMonth();
- const inicio=new Date(ano,indiceMes,1).getDay();
- const dias=new Date(ano,indiceMes+1,0).getDate();
+function CalendarioMensal({mes,inicio,fim,onSelecionar}){
+ const ano=mes.getFullYear(),indice=mes.getMonth();
+ const primeiroDia=new Date(ano,indice,1).getDay(),totalDias=new Date(ano,indice+1,0).getDate();
  const nomeMes=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(mes);
- const celulas=Array.from({length:inicio+dias},(_,i)=>i<inicio?null:i-inicio+1);
- const navegar=diferenca=>setMes(new Date(ano,indiceMes+diferenca,1));
- return <section className="calendar-month" aria-label={titulo}>
-  <div className="calendar-month-heading"><strong>{titulo}</strong><small>{formatarDataISO(value)}</small></div>
-  <div className="calendar-month-nav"><button type="button" aria-label={'Mês anterior - '+titulo} onClick={()=>navegar(-1)}>‹</button><span aria-live="polite">{nomeMes}</span><button type="button" aria-label={'Próximo mês - '+titulo} onClick={()=>navegar(1)}>›</button></div>
-  <div className="calendar-days" role="group" aria-label={'Escolher '+titulo.toLowerCase()}>
-   {['D','S','T','Q','Q','S','S'].map((dia,i)=><span className="calendar-weekday" key={i} aria-hidden="true">{dia}</span>)}
+ const celulas=Array.from({length:primeiroDia+totalDias},(_,i)=>i<primeiroDia?null:i-primeiroDia+1);
+ return <section className="calendar-month" aria-label={'Calendário de '+nomeMes}>
+  <div className="calendar-month-title">{nomeMes}</div>
+  <div className="calendar-days" role="group" aria-label={'Escolher um dia de '+nomeMes}>
+   {['Do','2ª','3ª','4ª','5ª','6ª','Sá'].map((dia,i)=><span className="calendar-weekday" key={i} aria-hidden="true">{dia}</span>)}
    {celulas.map((dia,i)=>{
-     if(dia===null)return <span key={'empty-'+i} aria-hidden="true"/>;
-     const iso=isoCalendario(ano,indiceMes,dia);
-     const bloqueado=Boolean((min&&iso<min)||(max&&iso>max));
-     // Destaca todas as datas do intervalo, inclusive ao atravessar meses.
-     const noPeriodo=Boolean(inicioPeriodo&&fimPeriodo&&iso>=inicioPeriodo&&iso<=fimPeriodo);
-     const extremo=Boolean(iso===inicioPeriodo||iso===fimPeriodo);
-     const classe=noPeriodo?(extremo?'calendar-day-selected':'calendar-day-in-range'):'';
-     return <button key={iso} type="button" aria-label={dia+' de '+nomeMes+(noPeriodo?', dentro do período selecionado':'')} aria-pressed={value===iso} className={classe} disabled={bloqueado} onClick={()=>onChange(iso)}>{dia}</button>;
+    if(dia===null)return <span key={'vazio-'+i} aria-hidden="true"/>;
+    const iso=isoCalendario(ano,indice,dia);
+    const extremo=iso===inicio||iso===fim;
+    const intermediario=Boolean(inicio&&fim&&iso>inicio&&iso<fim);
+    const classes=[extremo?'calendar-day-selected':'',intermediario?'calendar-day-in-range':''].filter(Boolean).join(' ');
+    return <button type="button" key={iso} className={classes} aria-pressed={extremo} aria-label={dia+' de '+nomeMes+(intermediario?', dentro do período selecionado':'')} onClick={()=>onSelecionar(iso)}>{dia}</button>;
    })}
   </div>
  </section>;
 }
-function PeriodoPersonalizado({inicio,fim,onInicio,onFim,onClose}){
- const hoje=dateISO(new Date());
- const mesAnterior=dateISO(new Date(new Date().getFullYear(),new Date().getMonth()-1,1));
- return <div className="custom-period" role="group" aria-label="Período personalizado de recepção">
-  <div className="custom-period-intro"><strong>Selecionar período personalizado</strong><span>Escolha a data inicial e a data final nos calendários.</span></div>
-  <div className="custom-period-calendars">
-   <CalendarioMensal titulo="Data inicial" value={inicio} max={fim||undefined} inicioPeriodo={inicio} fimPeriodo={fim} initialMonth={inicio||mesAnterior} onChange={onInicio}/>
-   <CalendarioMensal titulo="Data final" value={fim} min={inicio||undefined} inicioPeriodo={inicio} fimPeriodo={fim} initialMonth={fim||hoje} onChange={onFim}/>
+function PeriodoPersonalizado({inicio,fim,aberto,onApply,onCancel}){
+ const [rascunhoInicio,setRascunhoInicio]=useState(inicio||'');
+ const [rascunhoFim,setRascunhoFim]=useState(fim||'');
+ const [mesBase,setMesBase]=useState(()=>primeiroDiaMes(inicio||dateISO(new Date())));
+ useEffect(()=>{
+  if(!aberto)return;
+  setRascunhoInicio(inicio||'');
+  setRascunhoFim(fim||'');
+  const hoje=new Date(),inicial=primeiroDiaMes(inicio||dateISO(hoje));
+  // Sem período prévio, exibir mês anterior e mês atual, como no fluxo anterior.
+  setMesBase(inicio?inicial:new Date(hoje.getFullYear(),hoje.getMonth()-1,1));
+ },[aberto,inicio,fim]);
+ const selecionarDia=iso=>{
+  if(!rascunhoInicio||rascunhoFim){setRascunhoInicio(iso);setRascunhoFim('');return}
+  if(iso<rascunhoInicio){setRascunhoFim(rascunhoInicio);setRascunhoInicio(iso);return}
+  setRascunhoFim(iso);
+ };
+ const navegar=meses=>setMesBase(anterior=>new Date(anterior.getFullYear(),anterior.getMonth()+meses,1));
+ const seguinte=new Date(mesBase.getFullYear(),mesBase.getMonth()+1,1);
+ return <div className="custom-period" role="group" aria-label="Selecionar intervalo de recepção de dados">
+  <div className="calendar-mode"><span className="calendar-mode-active">Entre</span></div>
+  <div className="calendar-range-summary">
+   <div><small>Data inicial</small><strong>{formatarDataISO(rascunhoInicio)}</strong></div>
+   <span aria-hidden="true">e</span>
+   <div><small>Data final</small><strong>{formatarDataISO(rascunhoFim)}</strong></div>
   </div>
-  <div className="custom-period-footer"><div><span>Período: <strong>{formatarDataISO(inicio)} a {formatarDataISO(fim)}</strong></span><small>{inicio&&fim?'Datas selecionadas':'Selecione ambas as datas para filtrar o período'}</small></div><button type="button" className="calendar-done" onClick={onClose}>Concluir</button></div>
+  <div className="calendar-range-navigation">
+   <button type="button" aria-label="Meses anteriores" onClick={()=>navegar(-1)}>‹</button>
+   <span>Escolha o início e o fim no mesmo mês ou entre meses</span>
+   <button type="button" aria-label="Próximos meses" onClick={()=>navegar(1)}>›</button>
+  </div>
+  <div className="custom-period-calendars">
+   <CalendarioMensal mes={mesBase} inicio={rascunhoInicio} fim={rascunhoFim} onSelecionar={selecionarDia}/>
+   <CalendarioMensal mes={seguinte} inicio={rascunhoInicio} fim={rascunhoFim} onSelecionar={selecionarDia}/>
+  </div>
+  <div className="custom-period-footer">
+   <div><span>Período: <strong>{rascunhoInicio&&rascunhoFim?new Intl.DateTimeFormat('pt-BR').format(new Date(rascunhoInicio+'T12:00:00'))+' a '+new Intl.DateTimeFormat('pt-BR').format(new Date(rascunhoFim+'T12:00:00')):'Selecione as duas datas'}</strong></span><small>Primeiro clique: início. Segundo clique: fim. Terceiro clique: novo intervalo.</small></div>
+   <div className="calendar-actions"><button type="button" className="calendar-cancel" onClick={onCancel}>Cancelar</button><button type="button" className="calendar-done" disabled={!rascunhoInicio||!rascunhoFim} onClick={()=>onApply(rascunhoInicio,rascunhoFim)}>Aplicar filtro</button></div>
+  </div>
  </div>;
 }
 function App(){
@@ -174,14 +198,15 @@ function App(){
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
        [erroUnidades,setErroUnidades]=useState('');
  const [calendarioAberto,setCalendarioAberto]=useState(false);
+ const periodoAnteriorRef=useRef('all');
  const calendarioContainerRef=useRef(null);
  // Fecha o pop-up sem perder as datas, ao clicar fora ou pressionar Esc.
  useEffect(()=>{
    if(!calendarioAberto)return;
    const fecharFora=event=>{
-     if(calendarioContainerRef.current&&!calendarioContainerRef.current.contains(event.target))setCalendarioAberto(false);
+     if(calendarioContainerRef.current&&!calendarioContainerRef.current.contains(event.target)){setCalendarioAberto(false);setPeriodo(periodoAnteriorRef.current)}
    };
-   const fecharEsc=event=>{if(event.key==='Escape')setCalendarioAberto(false)};
+   const fecharEsc=event=>{if(event.key==='Escape'){setCalendarioAberto(false);setPeriodo(periodoAnteriorRef.current)}};
    document.addEventListener('pointerdown',fecharFora);
    document.addEventListener('keydown',fecharEsc);
    return()=>{document.removeEventListener('pointerdown',fecharFora);document.removeEventListener('keydown',fecharEsc)};
@@ -233,14 +258,25 @@ function App(){
  const recebimentoNoRecorte=Boolean(municipio||versao||dataInicio||dataFim);
  const recencia=useMemo(()=>recency.map(c=>{const count=rows.filter(r=>category(r)===c.key).length;return {...c,count,percentage:rows.length?count*100/rows.length:0}}),[rows]);
  const selecionarPeriodo=value=>{
+  if(value==='custom'){
+   if(periodo!=='custom')periodoAnteriorRef.current=periodo;
+   setPeriodo('custom');setCalendarioAberto(true);return;
+  }
+  periodoAnteriorRef.current=value;
   setPeriodo(value);
-  setCalendarioAberto(value==='custom');
-  if(value==='custom')return;
+  setCalendarioAberto(false);
   if(value==='all'){setDataInicio('');setDataFim('');return}
   const now=new Date();const end=dateISO(now);const days=Number(value);
   const begin=new Date(now);begin.setDate(begin.getDate()-days+1);
   setDataInicio(dateISO(begin));setDataFim(end);
  };
+ // Somente a confirmação atualiza os parâmetros efetivos da API e os indicadores.
+ const aplicarPeriodo=(inicio,fim)=>{
+  setDataInicio(inicio);setDataFim(fim);
+  setPeriodo('custom');periodoAnteriorRef.current='custom';
+  setCalendarioAberto(false);
+ };
+ const cancelarPeriodo=()=>{setCalendarioAberto(false);setPeriodo(periodoAnteriorRef.current)};
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
@@ -249,9 +285,9 @@ function App(){
       <select aria-label="Data da Recepção" aria-expanded={periodo==='custom'&&calendarioAberto} aria-controls="calendario-periodo" value={periodo} onClick={()=>{if(periodo==='custom')setCalendarioAberto(true)}} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select>
     </label>
     {periodo==='custom'&&<div id="calendario-periodo" className={'calendar-popover'+(calendarioAberto?' calendar-popover-open':'')} aria-hidden={!calendarioAberto}>
-      <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} onInicio={setDataInicio} onFim={setDataFim} onClose={()=>setCalendarioAberto(false)}/>
+      <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} aberto={calendarioAberto} onApply={aplicarPeriodo} onCancel={cancelarPeriodo}/>
     </div>}
-  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
+  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
   
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
