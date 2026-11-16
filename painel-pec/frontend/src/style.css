@@ -368,3 +368,25 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
  .calendar-actions{width:100%}
  .filters .calendar-cancel,.filters .calendar-done{width:50%;min-width:0}
 }
+
+/* Atualização manual: rotação somente durante a consulta e confirmação de sucesso. */
+.filters .filter-actions .refresh-button{transition:background-color .2s,border-color .2s,box-shadow .2s,transform .2s}
+.filters .filter-actions .refresh-button:not(:disabled):hover{transform:translateY(-1px)}
+.filters .filter-actions .refresh-button:disabled{opacity:1;cursor:progress;border-color:#88b6e4;background:#eaf3ff;color:#1767b7}
+.refresh-icon{display:inline-flex;align-items:center;justify-content:center;line-height:0}
+.refresh-button-loading .refresh-icon{animation:refresh-spin .9s linear infinite}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+.refresh-success{display:flex;align-items:center;gap:9px;max-width:max-content;margin:-5px 0 14px;padding:9px 13px;border:1px solid #a9dac1;border-radius:9px;background:#ecfaf2;color:#16673f;font-size:14px;font-weight:650;box-shadow:0 3px 10px rgba(32,119,72,.08);animation:refresh-notice-in .23s ease-out}
+.refresh-success svg{flex:0 0 auto}
+@keyframes refresh-notice-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* O intervalo aplicado permanece visível no filtro após fechar o calendário. */
+.filters .period-control .period-selected-summary{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:5px 9px;border:1px solid #b9d8f7;border-radius:7px;background:#eaf4ff;color:#175e9c;font-size:12px;line-height:1.35;font-weight:750;white-space:nowrap;max-width:100%}
+.filters .period-control .period-selected-summary svg{flex:0 0 auto}
+@media(max-width:640px){
+ .filters .period-control .period-selected-summary{font-size:12px;white-space:normal}
+ .refresh-success{max-width:100%;margin:0 0 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .refresh-button-loading .refresh-icon,.refresh-success{animation:none}
+}
