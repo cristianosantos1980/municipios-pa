@@ -76,7 +76,7 @@ Os filtros **Município** e **Unidade de Saúde** funcionam nos dois sentidos. �
 ## Filtros
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
-- **Data do Recebimento**: filtro único com Todo o período, últimos 7/30/90 dias ou período personalizado (datas inicial e final). A API continua recebendo `data_inicio` e `data_fim` no formato ISO `AAAA-MM-DD`; a data final é inclusiva. A referência temporal disponível na view é `ultima_transmissao`, que representa o último recebimento consolidado, não o histórico de eventos.
+- **Data da Recepção**: filtro único com Todo o período, últimos 7/30/90 dias ou período personalizado. Ao selecionar **Personalizado**, aparecem **dois calendários visuais** (data inicial e final), com navegação por mês e escolha por clique, lado a lado no desktop e empilhados no celular. Datas incompatíveis com o início/fim já escolhido ficam desabilitadas. A API continua recebendo `data_inicio` e `data_fim` no formato ISO `AAAA-MM-DD`; a data final é inclusiva. A referência temporal disponível na view é `ultima_transmissao`, que representa o último recebimento consolidado, não o histórico de eventos.
 - Os filtros afetam todos os indicadores de cobertura e o mapa; o campo Município é uma busca local na lista de pendências.
 - **Atenção à semântica temporal:** a view representa a **última transmissão consolidada**, não o histórico de todos os lotes. Um filtro de mês não indica necessariamente todos os municípios que enviaram naquele mês.
 
