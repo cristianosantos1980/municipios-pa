@@ -198,6 +198,14 @@ function App(){
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
        [erroUnidades,setErroUnidades]=useState('');
  const [calendarioAberto,setCalendarioAberto]=useState(false);
+ const [atualizando,setAtualizando]=useState(false);
+ const [avisoAtualizacao,setAvisoAtualizacao]=useState('');
+ // Mostra confirmação temporária apenas em atualizações solicitadas pelo usuário.
+ useEffect(()=>{
+  if(!avisoAtualizacao)return;
+  const timer=setTimeout(()=>setAvisoAtualizacao(''),5000);
+  return()=>clearTimeout(timer);
+ },[avisoAtualizacao]);
  const periodoAnteriorRef=useRef('all');
  const calendarioContainerRef=useRef(null);
  // Fecha o pop-up sem perder as datas, ao clicar fora ou pressionar Esc.
@@ -211,7 +219,10 @@ function App(){
    document.addEventListener('keydown',fecharEsc);
    return()=>{document.removeEventListener('pointerdown',fecharFora);document.removeEventListener('keydown',fecharEsc)};
  },[calendarioAberto]);
- const refresh=async()=>{
+ const refresh=async(manual=false)=>{
+  // A atualização automática é silenciosa; o clique manual mostra confirmação.
+  if(manual)setAvisoAtualizacao('');
+  setAtualizando(true);
   try{
    const params=new URLSearchParams();
    if(versao)params.set('versao',versao);
@@ -220,7 +231,13 @@ function App(){
    const res=await fetch('/api/cobertura'+(params.size?'?'+params:''),{cache:'no-store'});
    if(!res.ok)throw new Error('Falha na API: '+res.status);
    setPayload(await res.json());setLastRefresh(new Date());setError('');
-  }catch(e){setError(String(e))}
+   if(manual)setAvisoAtualizacao('Dados atualizados com sucesso.');
+  }catch(e){
+   setAvisoAtualizacao('');
+   setError(String(e));
+  }finally{
+   setAtualizando(false);
+  }
  };
  useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
  useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
@@ -284,11 +301,12 @@ function App(){
     <label className="period-filter">Data da Recepção
       <select aria-label="Data da Recepção" aria-expanded={periodo==='custom'&&calendarioAberto} aria-controls="calendario-periodo" value={periodo} onClick={()=>{if(periodo==='custom')setCalendarioAberto(true)}} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select>
     </label>
+    {periodo==='custom'&&dataInicio&&dataFim&&<span className="period-selected-summary" title={'Período aplicado: '+dataInicio+' a '+dataFim}><UiIcon name="calendar" size={15}/>{dataInicio.slice(8,10)+'/'+dataInicio.slice(5,7)+'/'+dataInicio.slice(0,4)} a {dataFim.slice(8,10)+'/'+dataFim.slice(5,7)+'/'+dataFim.slice(0,4)}</span>}
     {periodo==='custom'&&<div id="calendario-periodo" className={'calendar-popover'+(calendarioAberto?' calendar-popover-open':'')} aria-hidden={!calendarioAberto}>
       <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} aberto={calendarioAberto} onApply={aplicarPeriodo} onCancel={cancelarPeriodo}/>
     </div>}
-  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
-  
+  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className={'filter-icon-button refresh-button'+(atualizando?' refresh-button-loading':'')} aria-label={atualizando?'Atualizando dados':'Atualizar dados'} title={atualizando?'Atualizando dados...':'Atualizar dados'} disabled={atualizando} onClick={()=>refresh(true)}><span className="refresh-icon"><UiIcon name="reload" size={22}/></span></button></div></section>
+  {avisoAtualizacao&&<div className="refresh-success" role="status" aria-live="polite"><UiIcon name="mapped" size={18}/>{avisoAtualizacao}</div>}
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
