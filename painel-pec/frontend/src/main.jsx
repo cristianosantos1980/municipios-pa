@@ -122,6 +122,44 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
   </div>}
  </div>;
 }
+// Calendários visuais independentes: seleção por clique, sem exigir digitação de datas.
+const formatarDataISO=value=>value?value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4):'Não selecionada';
+const primeiroDiaMes=valor=>{const d=valor?new Date(valor+'T12:00:00'):new Date();return new Date(d.getFullYear(),d.getMonth(),1)};
+const isoCalendario=(ano,mes,dia)=>String(ano).padStart(4,'0')+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
+function CalendarioMensal({titulo,value,min,max,onChange,initialMonth}){
+ const [mes,setMes]=useState(()=>primeiroDiaMes(value||initialMonth));
+ const ano=mes.getFullYear(),indiceMes=mes.getMonth();
+ const inicio=new Date(ano,indiceMes,1).getDay();
+ const dias=new Date(ano,indiceMes+1,0).getDate();
+ const nomeMes=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(mes);
+ const celulas=Array.from({length:inicio+dias},(_,i)=>i<inicio?null:i-inicio+1);
+ const navegar=diferenca=>setMes(new Date(ano,indiceMes+diferenca,1));
+ return <section className="calendar-month" aria-label={titulo}>
+  <div className="calendar-month-heading"><strong>{titulo}</strong><small>{formatarDataISO(value)}</small></div>
+  <div className="calendar-month-nav"><button type="button" aria-label={'Mês anterior - '+titulo} onClick={()=>navegar(-1)}>‹</button><span aria-live="polite">{nomeMes}</span><button type="button" aria-label={'Próximo mês - '+titulo} onClick={()=>navegar(1)}>›</button></div>
+  <div className="calendar-days" role="group" aria-label={'Escolher '+titulo.toLowerCase()}>
+   {['D','S','T','Q','Q','S','S'].map((dia,i)=><span className="calendar-weekday" key={i} aria-hidden="true">{dia}</span>)}
+   {celulas.map((dia,i)=>{
+     if(dia===null)return <span key={'empty-'+i} aria-hidden="true"/>;
+     const iso=isoCalendario(ano,indiceMes,dia);
+     const bloqueado=Boolean((min&&iso<min)||(max&&iso>max));
+     return <button key={iso} type="button" aria-label={dia+' de '+nomeMes} aria-pressed={value===iso} className={value===iso?'calendar-day-selected':''} disabled={bloqueado} onClick={()=>onChange(iso)}>{dia}</button>;
+   })}
+  </div>
+ </section>;
+}
+function PeriodoPersonalizado({inicio,fim,onInicio,onFim}){
+ const hoje=dateISO(new Date());
+ const mesAnterior=dateISO(new Date(new Date().getFullYear(),new Date().getMonth()-1,1));
+ return <div className="custom-period" role="group" aria-label="Período personalizado de recepção">
+  <div className="custom-period-intro"><strong>Selecionar período personalizado</strong><span>Escolha a data inicial e a data final nos calendários.</span></div>
+  <div className="custom-period-calendars">
+   <CalendarioMensal titulo="Data inicial" value={inicio} max={fim||undefined} initialMonth={inicio||mesAnterior} onChange={onInicio}/>
+   <CalendarioMensal titulo="Data final" value={fim} min={inicio||undefined} initialMonth={fim||hoje} onChange={onFim}/>
+  </div>
+  <div className="custom-period-footer"><span>Período: <strong>{formatarDataISO(inicio)} a {formatarDataISO(fim)}</strong></span><span>{inicio&&fim?'Datas selecionadas':'Selecione ambas as datas para filtrar o período'}</span></div>
+ </div>;
+}
 function App(){
  const [geo,setGeo]=useState(null),[payload,setPayload]=useState(null),
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
@@ -188,7 +226,8 @@ function App(){
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="period-filter">Data da Recepção <select aria-label="Data da Recepção" value={periodo} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select></label>{periodo==='custom'&&<><label>De <input aria-label="Data inicial da recepção" type="date" value={dataInicio} max={dataFim||undefined} onChange={e=>setDataInicio(e.target.value)}/></label><label>Até <input aria-label="Data final da recepção" type="date" value={dataFim} min={dataInicio||undefined} onChange={e=>setDataFim(e.target.value)}/></label></>}<div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="period-filter">Data da Recepção <select aria-label="Data da Recepção" value={periodo} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select></label><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
+  {periodo==='custom'&&<PeriodoPersonalizado inicio={dataInicio} fim={dataFim} onInicio={setDataInicio} onFim={setDataFim}/>}
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
