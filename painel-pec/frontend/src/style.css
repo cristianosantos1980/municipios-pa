@@ -263,3 +263,35 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
   .calendar-month{padding:12px}
   .calendar-days button{height:39px;font-size:14px}
 }
+
+/* Pop-up do período personalizado: sobrepõe o conteúdo, não altera o fluxo da página. */
+.filters{position:relative;z-index:20}
+.filters .period-control{position:relative;min-width:0;max-width:100%;z-index:21}
+.filters .period-control .period-filter{display:flex;flex-direction:column;gap:6px;min-width:0;width:100%}
+.filters .period-control .period-filter select{width:100%;max-width:none;min-width:0}
+.calendar-popover{
+  position:absolute;top:calc(100% + 12px);right:0;
+  width:min(760px,calc(100vw - 32px));max-width:none;
+  z-index:100;padding:0;visibility:hidden;opacity:0;
+  pointer-events:none;transform:translateY(-8px) scale(.985);
+  transform-origin:top right;
+  transition:opacity .2s ease,transform .2s ease,visibility .2s;
+}
+.calendar-popover-open{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+.calendar-popover .custom-period{margin:0;width:100%;max-width:none;box-shadow:0 18px 42px rgba(23,48,82,.22);border-color:#b8cfe9}
+.calendar-popover .custom-period-footer{justify-content:space-between}
+.calendar-popover .custom-period-footer>div{display:flex;flex-direction:column;gap:4px}
+.calendar-popover .custom-period-footer small{font-size:12px;color:#63758d}
+.calendar-done{border:0;border-radius:8px;padding:10px 18px;min-height:40px;background:#196eb6;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.calendar-done:hover{background:#125791}
+.calendar-done:focus-visible{outline:3px solid #2d8ddb;outline-offset:3px}
+@media(max-width:1100px){
+  .filters .period-control{width:100%}
+}
+@media(max-width:640px){
+  .calendar-popover{width:min(440px,calc(100vw - 40px));right:0}
+  .calendar-popover .custom-period{padding:12px;max-height:min(77vh,690px);overflow:auto;overscroll-behavior:contain}
+}
+@media(prefers-reduced-motion:reduce){
+  .calendar-popover{transition:none;transform:none}
+}
