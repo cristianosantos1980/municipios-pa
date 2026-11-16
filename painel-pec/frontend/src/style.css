@@ -390,3 +390,24 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 @media(prefers-reduced-motion:reduce){
  .refresh-button-loading .refresh-icon,.refresh-success{animation:none}
 }
+
+/* A data aplicada ocupa o próprio seletor, sem badge externo nem linha adicional. */
+.filters .period-control{min-width:264px}
+.filters .period-control .period-filter select{width:100%;min-width:0;font-size:14px;padding-right:24px;text-overflow:ellipsis}
+@media(max-width:1100px){.filters .period-control{min-width:0}}
+
+/* Notificação flutuante: não participa do layout e esmaece antes de sair. */
+.refresh-success{
+ position:fixed;right:22px;bottom:22px;top:auto;left:auto;z-index:10000;
+ max-width:min(390px,calc(100vw - 28px));margin:0;padding:13px 17px;
+ border-radius:12px;box-shadow:0 12px 30px rgba(15,78,49,.20);
+ pointer-events:none;animation:refresh-toast-life 5s ease-in-out both;
+}
+@keyframes refresh-toast-life{
+ 0%{opacity:0;transform:translateY(12px)}
+ 8%,75%{opacity:1;transform:translateY(0)}
+ 100%{opacity:0;transform:translateY(10px)}
+}
+@media(max-width:640px){.refresh-success{right:14px;bottom:14px;left:14px;max-width:none;width:auto;margin:0}}
+@media(prefers-reduced-motion:reduce){.refresh-success{animation:refresh-toast-fade 5s linear both}}
+@keyframes refresh-toast-fade{0%{opacity:1}75%{opacity:1}100%{opacity:0}}
