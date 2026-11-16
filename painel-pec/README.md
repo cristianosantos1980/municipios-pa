@@ -73,6 +73,12 @@ Os filtros **Município** e **Unidade de Saúde** funcionam nos dois sentidos. �
 
 **Testes rápidos após atualizar:** selecionar Colares, confirmar lista de unidades, escolher unidade com coordenadas, observar aproximação e popup com nome/CNES/status; limpar somente a unidade pelo `×` e confirmar que a lista de unidades de Colares reaparece, sem perder o município; selecionar outra unidade; mudar versão PEC ou período e conferir as cores; limpar filtros e confirmar a visão dos 144 municípios. A pesquisa estadual por nome/CNES continua disponível quando o usuário digita no campo.
 
+## Atualização automática da referência CNES no rodapé
+
+O texto **“CNES - Última atualização”** não usa mais uma data fixa no frontend. A API `GET /api/cnes/atualizacao` executa exclusivamente um `SELECT MAX(atualizado_em)` em `analytics.cnes_estabelecimentos` com `uf = '15'`, usando a conexão PostgreSQL somente leitura e o timeout configurado. O frontend mostra a data mais recente no formato brasileiro após a consulta de cobertura bem-sucedida, preservando o hiperlink oficial de download do CNES. Quando não há data ou a consulta falha, exibe **“Não disponível”** em vez de uma data inventada ou desatualizada.
+
+**Semântica:** `atualizado_em` é a data registrada na tabela analítica do cadastro CNES do Pará; **não equivale necessariamente à competência oficial do CNES, ao horário do ETL do PEC ou à data da última recepção de dados do PEC**. A atualização periódica do painel e o clique em Atualizar consultam novamente a referência.
+
 ## Filtros
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
