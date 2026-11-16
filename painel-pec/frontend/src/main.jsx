@@ -197,7 +197,8 @@ function App(){
        [dataFim,setDataFim]=useState(''),[periodo,setPeriodo]=useState('all'),
        [unidade,setUnidade]=useState(''),[unidades,setUnidades]=useState([]),
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
-       [erroUnidades,setErroUnidades]=useState('');
+       [erroUnidades,setErroUnidades]=useState(''),
+       [cnesAtualizadoEm,setCnesAtualizadoEm]=useState(null);
  const [calendarioAberto,setCalendarioAberto]=useState(false);
  const [atualizando,setAtualizando]=useState(false);
  const [avisoAtualizacao,setAvisoAtualizacao]=useState('');
@@ -242,6 +243,20 @@ function App(){
  };
  useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
  useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
+ // Mantém a data do cadastro CNES desacoplada dos filtros e das datas de recepção PEC.
+ // A consulta só é repetida após uma atualização bem-sucedida da cobertura.
+ useEffect(()=>{
+  if(!lastRefresh)return;
+  const controller=new AbortController();
+  fetch('/api/cnes/atualizacao',{signal:controller.signal,cache:'no-store'})
+   .then(async response=>{
+    if(!response.ok)throw new Error('Falha na consulta da atualização CNES');
+    return response.json();
+   })
+   .then(data=>setCnesAtualizadoEm(data.atualizado_em||null))
+   .catch(error=>{if(error.name!=='AbortError')setCnesAtualizadoEm(null)});
+  return()=>controller.abort();
+ },[lastRefresh]);
  useEffect(()=>{
    setUnidades([]);
    setErroUnidades('');
@@ -335,7 +350,7 @@ function App(){
       </article>
     </div>
   </section>
-  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Última recepção de dados no recorte':'Última recepção de dados na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES - Última atualização: 14/10/26</a> · <a href="https://pec.centralizador.saude.pa.gov.br" target="_blank" rel="noopener noreferrer">Centralizador Estadual</a></p>
+  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Última recepção de dados no recorte':'Última recepção de dados na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES - Última atualização: {cnesAtualizadoEm?receberDataHora(cnesAtualizadoEm).data:'Não disponível'}</a> · <a href="https://pec.centralizador.saude.pa.gov.br" target="_blank" rel="noopener noreferrer">Centralizador Estadual</a></p>
  </main></>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
