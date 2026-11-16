@@ -295,3 +295,36 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 @media(prefers-reduced-motion:reduce){
   .calendar-popover{transition:none;transform:none}
 }
+
+/* Intervalo selecionado: extremos fortes e dias intermediários em azul claro. */
+/* Seletor específico de .filters evita que regras genéricas de botão ocultem as cores. */
+.filters .calendar-days button.calendar-day-in-range{
+  background:#d7eaff;color:#124d88;border-color:#c5dfff;border-radius:5px;
+}
+.filters .calendar-days button.calendar-day-selected{
+  background:#1478cc;color:#fff;border-color:#1478cc;border-radius:7px;
+  box-shadow:0 2px 5px rgba(20,100,180,.18);
+}
+.filters .calendar-days button.calendar-day-in-range:hover:not(:disabled){
+  background:#bedcff;border-color:#98c4f5;
+}
+.filters .calendar-days button.calendar-day-selected:hover:not(:disabled){
+  background:#075fae;border-color:#075fae;color:#fff;
+}
+/* Botão Concluir: especificidade superior às regras globais de .filters button. */
+.filters .calendar-done{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:auto;min-width:116px;height:44px;min-height:44px;padding:0 20px;
+  border:1px solid #1165ac;border-radius:9px;
+  background:#176eb8;color:#fff;font-size:15px;font-weight:750;
+  line-height:1.2;white-space:nowrap;box-shadow:0 3px 8px rgba(18,83,146,.16);
+  cursor:pointer;
+}
+.filters .calendar-done:hover{
+  background:#0e5796;color:#fff;border-color:#0e5796;
+}
+.filters .calendar-done:focus-visible{outline:3px solid #65aff1;outline-offset:3px}
+@media(max-width:640px){
+  .calendar-popover .custom-period-footer{align-items:stretch}
+  .filters .calendar-done{width:100%;min-width:0}
+}
