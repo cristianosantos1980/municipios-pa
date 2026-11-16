@@ -148,7 +148,7 @@ function CalendarioMensal({titulo,value,min,max,onChange,initialMonth}){
   </div>
  </section>;
 }
-function PeriodoPersonalizado({inicio,fim,onInicio,onFim}){
+function PeriodoPersonalizado({inicio,fim,onInicio,onFim,onClose}){
  const hoje=dateISO(new Date());
  const mesAnterior=dateISO(new Date(new Date().getFullYear(),new Date().getMonth()-1,1));
  return <div className="custom-period" role="group" aria-label="Período personalizado de recepção">
@@ -157,7 +157,7 @@ function PeriodoPersonalizado({inicio,fim,onInicio,onFim}){
    <CalendarioMensal titulo="Data inicial" value={inicio} max={fim||undefined} initialMonth={inicio||mesAnterior} onChange={onInicio}/>
    <CalendarioMensal titulo="Data final" value={fim} min={inicio||undefined} initialMonth={fim||hoje} onChange={onFim}/>
   </div>
-  <div className="custom-period-footer"><span>Período: <strong>{formatarDataISO(inicio)} a {formatarDataISO(fim)}</strong></span><span>{inicio&&fim?'Datas selecionadas':'Selecione ambas as datas para filtrar o período'}</span></div>
+  <div className="custom-period-footer"><div><span>Período: <strong>{formatarDataISO(inicio)} a {formatarDataISO(fim)}</strong></span><small>{inicio&&fim?'Datas selecionadas':'Selecione ambas as datas para filtrar o período'}</small></div><button type="button" className="calendar-done" onClick={onClose}>Concluir</button></div>
  </div>;
 }
 function App(){
@@ -169,6 +169,19 @@ function App(){
        [unidade,setUnidade]=useState(''),[unidades,setUnidades]=useState([]),
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
        [erroUnidades,setErroUnidades]=useState('');
+ const [calendarioAberto,setCalendarioAberto]=useState(false);
+ const calendarioContainerRef=useRef(null);
+ // Fecha o pop-up sem perder as datas, ao clicar fora ou pressionar Esc.
+ useEffect(()=>{
+   if(!calendarioAberto)return;
+   const fecharFora=event=>{
+     if(calendarioContainerRef.current&&!calendarioContainerRef.current.contains(event.target))setCalendarioAberto(false);
+   };
+   const fecharEsc=event=>{if(event.key==='Escape')setCalendarioAberto(false)};
+   document.addEventListener('pointerdown',fecharFora);
+   document.addEventListener('keydown',fecharEsc);
+   return()=>{document.removeEventListener('pointerdown',fecharFora);document.removeEventListener('keydown',fecharEsc)};
+ },[calendarioAberto]);
  const refresh=async()=>{
   try{
    const params=new URLSearchParams();
@@ -217,6 +230,7 @@ function App(){
  const recencia=useMemo(()=>recency.map(c=>{const count=rows.filter(r=>category(r)===c.key).length;return {...c,count,percentage:rows.length?count*100/rows.length:0}}),[rows]);
  const selecionarPeriodo=value=>{
   setPeriodo(value);
+  setCalendarioAberto(value==='custom');
   if(value==='custom')return;
   if(value==='all'){setDataInicio('');setDataFim('');return}
   const now=new Date();const end=dateISO(now);const days=Number(value);
@@ -226,8 +240,15 @@ function App(){
  return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
  <main>
   <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
-  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><label className="period-filter">Data da Recepção <select aria-label="Data da Recepção" value={periodo} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select></label><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
-  {periodo==='custom'&&<PeriodoPersonalizado inicio={dataInicio} fim={dataFim} onInicio={setDataInicio} onFim={setDataFim}/>}
+  <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><div className="period-control" ref={calendarioContainerRef}>
+    <label className="period-filter">Data da Recepção
+      <select aria-label="Data da Recepção" aria-expanded={periodo==='custom'&&calendarioAberto} aria-controls="calendario-periodo" value={periodo} onClick={()=>{if(periodo==='custom')setCalendarioAberto(true)}} onChange={e=>selecionarPeriodo(e.target.value)}><option value="all">Todo o período</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="custom">Personalizado</option></select>
+    </label>
+    {periodo==='custom'&&<div id="calendario-periodo" className={'calendar-popover'+(calendarioAberto?' calendar-popover-open':'')} aria-hidden={!calendarioAberto}>
+      <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} onInicio={setDataInicio} onFim={setDataFim} onClose={()=>setCalendarioAberto(false)}/>
+    </div>}
+  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className="filter-icon-button" aria-label="Atualizar dados" title="Atualizar dados" onClick={refresh}><UiIcon name="reload" size={22}/></button></div></section>
+  
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
