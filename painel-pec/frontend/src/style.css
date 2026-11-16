@@ -328,3 +328,43 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
   .calendar-popover .custom-period-footer{align-items:stretch}
   .filters .calendar-done{width:100%;min-width:0}
 }
+
+/* Range picker no estilo Metabase: janela sincronizada de dois meses.
+   A seleção é apenas visual até clicar em Aplicar filtro. */
+.calendar-popover .custom-period{padding:16px 18px}
+.calendar-mode{display:flex;align-items:center;border-bottom:1px solid #dbe5f0;margin:-5px 0 14px;gap:15px}
+.calendar-mode-active{display:inline-flex;padding:7px 15px 10px;border-bottom:2px solid #1478cc;color:#125b9a;font-size:15px;font-weight:750}
+.calendar-range-summary{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:10px;margin-bottom:13px}
+.calendar-range-summary>div{min-width:0;min-height:58px;padding:8px 11px;border:1px solid #d0dce9;border-radius:8px;background:white;display:flex;flex-direction:column;gap:3px}
+.calendar-range-summary small{font-size:11px;font-weight:750;color:#59708c}
+.calendar-range-summary strong{font-size:14px;font-weight:600;color:#17365b;line-height:1.3;overflow-wrap:anywhere}
+.calendar-range-summary>span{text-align:center;color:#75869a}
+.calendar-range-navigation{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:6px}
+.calendar-range-navigation>span{font-size:12px;line-height:1.3;color:#66819a;text-align:center}
+.filters .calendar-range-navigation button{display:grid;place-items:center;flex:0 0 34px;width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border:1px solid #c8d8e8;border-radius:7px;background:#fff;color:#155e9d;font-size:25px;line-height:1;cursor:pointer}
+.filters .calendar-range-navigation button:hover{background:#edf5ff;border-color:#89b7e3}
+.calendar-popover .custom-period-calendars{gap:12px}
+.calendar-popover .calendar-month{border:0;border-radius:7px;padding:9px 6px;background:#fff}
+.calendar-month-title{min-height:30px;text-align:center;font-size:15px;font-weight:750;color:#263e58;text-transform:capitalize}
+.calendar-popover .calendar-days{gap:2px}
+.filters .calendar-days button{border-radius:3px;min-height:35px}
+.filters .calendar-days button.calendar-day-in-range{background:#ecf4fd;color:#1678cb;border-color:#ecf4fd;border-radius:2px}
+.filters .calendar-days button.calendar-day-selected{background:#3e96da;color:#fff;border-color:#3e96da;border-radius:3px;box-shadow:none}
+.calendar-popover .custom-period-footer{border-top:1px solid #e0e8f1;padding-top:13px;gap:12px}
+.calendar-actions{display:flex;align-items:center;gap:9px}
+.filters .calendar-cancel{min-height:42px;height:42px;padding:0 14px;border:1px solid #c8d7e8;border-radius:8px;background:#fff;color:#315a82;font-size:14px;font-weight:700;cursor:pointer}
+.filters .calendar-cancel:hover{background:#f0f5fa}
+.filters .calendar-done{width:auto;min-width:140px;min-height:42px;height:42px;padding:0 17px;border:1px solid #176eb8;background:#176eb8;color:#fff}
+.filters .calendar-done:disabled{background:#c5d1df;border-color:#c5d1df;color:#52667d;box-shadow:none;cursor:not-allowed;opacity:1}
+.filters .calendar-done:hover:not(:disabled){background:#105b9d;color:#fff;border-color:#105b9d}
+@media(max-width:640px){
+ .calendar-popover .custom-period{padding:12px}
+ .calendar-range-summary{gap:5px;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr)}
+ .calendar-range-summary>div{padding:7px;min-height:63px}
+ .calendar-range-summary strong{font-size:12px}
+ .calendar-popover .custom-period-calendars{gap:8px}
+ .calendar-popover .calendar-month{padding:7px 2px}
+ .calendar-popover .custom-period-footer{align-items:stretch}
+ .calendar-actions{width:100%}
+ .filters .calendar-cancel,.filters .calendar-done{width:50%;min-width:0}
+}
