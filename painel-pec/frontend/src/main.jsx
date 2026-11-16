@@ -126,7 +126,7 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
 const formatarDataISO=value=>value?value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4):'Não selecionada';
 const primeiroDiaMes=valor=>{const d=valor?new Date(valor+'T12:00:00'):new Date();return new Date(d.getFullYear(),d.getMonth(),1)};
 const isoCalendario=(ano,mes,dia)=>String(ano).padStart(4,'0')+'-'+String(mes+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
-function CalendarioMensal({titulo,value,min,max,onChange,initialMonth}){
+function CalendarioMensal({titulo,value,min,max,inicioPeriodo,fimPeriodo,onChange,initialMonth}){
  const [mes,setMes]=useState(()=>primeiroDiaMes(value||initialMonth));
  const ano=mes.getFullYear(),indiceMes=mes.getMonth();
  const inicio=new Date(ano,indiceMes,1).getDay();
@@ -143,7 +143,11 @@ function CalendarioMensal({titulo,value,min,max,onChange,initialMonth}){
      if(dia===null)return <span key={'empty-'+i} aria-hidden="true"/>;
      const iso=isoCalendario(ano,indiceMes,dia);
      const bloqueado=Boolean((min&&iso<min)||(max&&iso>max));
-     return <button key={iso} type="button" aria-label={dia+' de '+nomeMes} aria-pressed={value===iso} className={value===iso?'calendar-day-selected':''} disabled={bloqueado} onClick={()=>onChange(iso)}>{dia}</button>;
+     // Destaca todas as datas do intervalo, inclusive ao atravessar meses.
+     const noPeriodo=Boolean(inicioPeriodo&&fimPeriodo&&iso>=inicioPeriodo&&iso<=fimPeriodo);
+     const extremo=Boolean(iso===inicioPeriodo||iso===fimPeriodo);
+     const classe=noPeriodo?(extremo?'calendar-day-selected':'calendar-day-in-range'):'';
+     return <button key={iso} type="button" aria-label={dia+' de '+nomeMes+(noPeriodo?', dentro do período selecionado':'')} aria-pressed={value===iso} className={classe} disabled={bloqueado} onClick={()=>onChange(iso)}>{dia}</button>;
    })}
   </div>
  </section>;
@@ -154,8 +158,8 @@ function PeriodoPersonalizado({inicio,fim,onInicio,onFim,onClose}){
  return <div className="custom-period" role="group" aria-label="Período personalizado de recepção">
   <div className="custom-period-intro"><strong>Selecionar período personalizado</strong><span>Escolha a data inicial e a data final nos calendários.</span></div>
   <div className="custom-period-calendars">
-   <CalendarioMensal titulo="Data inicial" value={inicio} max={fim||undefined} initialMonth={inicio||mesAnterior} onChange={onInicio}/>
-   <CalendarioMensal titulo="Data final" value={fim} min={inicio||undefined} initialMonth={fim||hoje} onChange={onFim}/>
+   <CalendarioMensal titulo="Data inicial" value={inicio} max={fim||undefined} inicioPeriodo={inicio} fimPeriodo={fim} initialMonth={inicio||mesAnterior} onChange={onInicio}/>
+   <CalendarioMensal titulo="Data final" value={fim} min={inicio||undefined} inicioPeriodo={inicio} fimPeriodo={fim} initialMonth={fim||hoje} onChange={onFim}/>
   </div>
   <div className="custom-period-footer"><div><span>Período: <strong>{formatarDataISO(inicio)} a {formatarDataISO(fim)}</strong></span><small>{inicio&&fim?'Datas selecionadas':'Selecione ambas as datas para filtrar o período'}</small></div><button type="button" className="calendar-done" onClick={onClose}>Concluir</button></div>
  </div>;
