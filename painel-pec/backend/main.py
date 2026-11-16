@@ -30,6 +30,41 @@ def municipalities():
 def health():
     return {"status":"ok"}
 
+@app.get("/api/cnes/atualizacao")
+def cnes_atualizacao():
+    """Data mais recente do cadastro CNES na Analytics; não é a competência oficial."""
+    mode = os.getenv("DATA_MODE", "demo").lower()
+    if mode == "demo":
+        # Não inventar data de atualização em ambiente demonstrativo.
+        return {"atualizado_em": None, "modo": "demo"}
+    if mode != "postgres":
+        raise HTTPException(500, "DATA_MODE inválido")
+
+    # Consulta global e independente dos filtros de município, versão e período.
+    # A data reflete analytics.cnes_estabelecimentos.atualizado_em, não o ETL do PEC.
+    try:
+        with psycopg.connect(
+            host=os.environ["PGHOST"], port=int(os.getenv("PGPORT", "5433")),
+            dbname=os.environ["PGDATABASE"], user=os.environ["PGUSER"],
+            password=os.getenv("PGPASSWORD", ""),
+            sslmode=os.getenv("PGSSLMODE", "prefer"), connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=15000"
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT MAX(atualizado_em)
+                    FROM analytics.cnes_estabelecimentos
+                    WHERE uf = '15'
+                """)
+                atualizado_em = cur.fetchone()[0]
+    except Exception:
+        raise HTTPException(503, "Falha ao consultar a atualização CNES na Analytics")
+    return {
+        "atualizado_em": atualizado_em.isoformat() if atualizado_em else None,
+        "modo": "postgres"
+    }
+
+
 @app.get("/api/versoes")
 def versions():
     """Lista versões observadas, sem expor dados individuais."""
