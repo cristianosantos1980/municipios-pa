@@ -411,3 +411,8 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 @media(max-width:640px){.refresh-success{right:14px;bottom:14px;left:14px;max-width:none;width:auto;margin:0}}
 @media(prefers-reduced-motion:reduce){.refresh-success{animation:refresh-toast-fade 5s linear both}}
 @keyframes refresh-toast-fade{0%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+/* Identidade do cabeçalho: ícone de monitoramento substitui a cruz anterior. */
+.heading .mark{display:flex;align-items:center;justify-content:center;width:72px;height:72px;flex:0 0 72px;padding:0;line-height:0}
+.heading .mark svg{display:block;width:38px;height:38px}
+@media(max-width:640px){.heading .mark{width:40px;height:40px;min-width:0;flex-basis:auto;padding:0}.heading .mark svg{width:25px;height:25px}}
