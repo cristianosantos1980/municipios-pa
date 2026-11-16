@@ -19,6 +19,7 @@ function UiIcon({name,size=24}){
  const base={width:size,height:size,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.9,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':true};
  const shapes={
   building:<><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M2 9 12 3l10 6M9 21v-7h6v7M7 12h.01M17 12h.01"/></>,
+  monitoring:<><rect x="2.5" y="3.5" width="19" height="15" rx="2"/><path d="M8 21h8M12 18.5V21M5.5 13l3.5-3.5 2.5 2.5 3.5-4 3.5 2"/></>,
   mapped:<><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><path d="m9 10 2 2 4-4"/></>,
   missing:<><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h3M9 16l6 3m0-3-6 3"/></>,
   coverage:<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 8-8M16 4h4v4"/></>,
@@ -294,9 +295,9 @@ function App(){
   setCalendarioAberto(false);
  };
  const cancelarPeriodo=()=>{setCalendarioAberto(false);setPeriodo(periodoAnteriorRef.current)};
- return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Painel de Cobertura PEC</span></header>
+ return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Monitoramento PEC e-SUS APS</span></header>
  <main>
-  <div className="heading"><div className="mark">✚</div><div><h1>Cobertura Municipal – PEC e-SUS APS – Pará</h1><p>Centralizador Estadual do e-SUS APS | SESPA – Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
+  <div className="heading"><div className="mark" aria-hidden="true"><UiIcon name="monitoring" size={38}/></div><div><h1>Monitoramento da Recepção de Dados - PEC e-SUS APS</h1><p>Centralizador Estadual do e-SUS APS | SESPA - Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
   <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><div className="period-control" ref={calendarioContainerRef}>
     <label className="period-filter">Data da Recepção
       {/* O período aplicado aparece na própria opção selecionada, sem criar uma segunda linha. */}
