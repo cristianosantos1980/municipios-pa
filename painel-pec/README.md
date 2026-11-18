@@ -1,6 +1,18 @@
-# POC — Cobertura Municipal PEC e-SUS APS — Pará
+# Monitoramento da Recepção de Dados - PEC e-SUS APS
 
-Projeto experimental de painel institucional com **React + Apache ECharts + FastAPI + PostgreSQL** e Docker Compose. Usa diretamente o `PARA.geojson` da raiz deste repositório (propriedades `CD_MUN` e `NM_MUN`).
+Painel institucional com **React + Leaflet/OpenStreetMap + FastAPI + PostgreSQL** e Docker Compose. Usa diretamente o `PARA.geojson` da raiz deste repositório (propriedades `CD_MUN` e `NM_MUN`).
+
+## Interface UX e funcionalidades
+
+A identidade aprovada utiliza **faixas azuis com ícones brancos** para títulos: Resumo do Município, Cobertura Territorial, Distribuição das Versões PEC, Últimas Recepções, Recência e situação municipal. O cabeçalho exibe **SESPA sem o logotipo do Governo do Pará**; o botão Atualizar é somente um ícone com animação durante a consulta e toast de sucesso com fade. A interface é responsiva.
+
+- **Resumo municipal:** exibido após selecionar município; lista estabelecimentos CNES, quantidades com e sem recepção, percentual de unidades cadastradas com recepção no recorte, última data e botão para abrir a lista de estabelecimentos. Selecionar CNES da lista centraliza o pin correspondente, quando existem coordenadas válidas.
+- **Distribuição das versões:** `GET /api/versoes/distribuicao`, apenas leitura, contabiliza cada CNES no máximo uma vez pela versão do último registro que atende ao filtro de data/versão; não equivale a inventário completo de instalações. Se a consulta exceder o tempo limite, o gráfico exibe uma mensagem sem ocultar o restante do dashboard.
+- **Últimas Recepções (30 dias):** representa a **distribuição por data dos últimos registros municipais disponíveis**, não a evolução acumulada histórica nem a quantidade de todos os envios diários. Não apresentar curva de evolução histórica sem dados históricos próprios.
+- **Ajuda e indicadores:** os quatro cartões têm definição em tooltip e o botão Ajuda apresenta as ressalvas de interpretação.
+- **Exportação CSV:** utiliza os indicadores administrativos já carregados, respeitando filtros; não exporta dados de pacientes ou dados clínicos.
+- **Popup da unidade CNES:** nome, código CNES, status, última recepção e versão PEC associada; caso ausente, **Não identificada**.
+- **Fontes e atualizações:** apresenta a última data `analytics.cnes_estabelecimentos.atualizado_em`, o último registro PEC no recorte e o horário da consulta do frontend, com hiperlinks oficiais preservados.
 
 ## Instalação no devops1
 
@@ -29,7 +41,7 @@ A configuração inicial `DATA_MODE=demo` **não apresenta dados reais**. O pain
 
 ## PostgreSQL Analytics (após aprovação)
 
-Definir `DATA_MODE=postgres`, `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` em `.env`, com usuário somente leitura e acesso de rede autorizado. A API utiliza `default_transaction_read_only=on`, timeout SQL de 15 segundos e consulta apenas `analytics.vw_pec_cnes`. Em seguida:
+Definir `DATA_MODE=postgres`, `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` em `.env`, com usuário somente leitura e acesso de rede autorizado. A API utiliza `default_transaction_read_only=on`, timeout SQL de 15 segundos e consulta as fontes `analytics.vw_pec_cnes` e `analytics.cnes_estabelecimentos`. Em seguida:
 
 ```bash
 docker compose -f compose.yaml up -d --force-recreate api
@@ -52,9 +64,9 @@ A API é consultada pelo frontend a cada 30 minutos ou pelo botão Atualizar. No
 
 ## Mapa com OpenStreetMap
 
-O cartão de cobertura territorial utiliza exclusivamente **OpenStreetMap** (Leaflet com zoom e navegação). O OpenStreetMap mostra ruas e localidades como fundo; a cor verde/vermelha vem exclusivamente dos 144 polígonos do `PARA.geojson` e da resposta da API. A seleção de município destaca e aproxima a região.
+O cartão de cobertura territorial utiliza **OpenStreetMap** (Leaflet com zoom e navegação). O OpenStreetMap mostra ruas e localidades como fundo; as quatro cores da recência (verde escuro até 7 dias, verde claro de 8 a 30 dias, amarelo acima de 30 dias e vermelho sem registro) vêm dos 144 polígonos do `PARA.geojson` associados à resposta da API. A seleção de município destaca e aproxima a região.
 
-No OpenStreetMap a roda do mouse amplia/reduz o zoom. **Pins estilo localização, verdes/vermelhos** aparecem a partir do nível 7 para evitar aglomeração no panorama estadual; ao clicar em um pin o mapa aproxima e exibe seu município. Ao selecionar um município no filtro, o mapa aproxima a área e mostra seu pin mesmo em zoom menor. Cada pin é um marcador representativo da área do município, não a localização geográfica de um CNES, do PEC nem necessariamente da sede municipal. As cores seguem os mesmos dados da API e da sobreposição territorial.
+No OpenStreetMap a roda do mouse amplia/reduz o zoom. **Pins municipais por faixa de recência e pins CNES por recepção identificada** aparecem a partir do nível 7 para evitar aglomeração no panorama estadual; ao clicar em um pin o mapa aproxima e exibe seu município. Ao selecionar um município no filtro, o mapa aproxima a área e mostra seu pin mesmo em zoom menor. Cada pin é um marcador representativo da área do município, não a localização geográfica de um CNES, do PEC nem necessariamente da sede municipal. As cores seguem os mesmos dados da API e da sobreposição territorial.
 
 O navegador do usuário precisa acessar `https://tile.openstreetmap.org` para carregar os mapas de fundo. A licença do OpenStreetMap é exibida no mapa. Esta opção deve ser usada na POC sob a política pública de tiles: [OSM Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/). Não fazer prefetch ou download em massa. Para uso institucional com muitos acessos, avaliar provedor de tiles com SLA ou serviço próprio.
 
@@ -83,13 +95,13 @@ O texto **“CNES - Última atualização”** não usa mais uma data fixa no fr
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
 - **Data da Recepção**: filtro único com Todo o período, últimos 7/30/90 dias ou período personalizado. Ao selecionar **Personalizado**, abre-se um **pop-up sobreposto ao painel** (sem deslocar os indicadores), com animação suave e **dois meses consecutivos sincronizados**, lado a lado no desktop e empilhados no celular. O primeiro clique escolhe o início e o segundo escolhe o fim, inclusive **no mesmo mês**; todas as datas intermediárias ficam destacadas. Um terceiro clique inicia nova seleção. **Aplicar filtro** é habilitado somente após escolher ambas as datas; antes disso, a API não recebe o intervalo em edição. **Cancelar**, Esc ou clique fora fecham sem aplicar o rascunho, preservando o filtro anterior. A API continua recebendo `data_inicio` e `data_fim` no formato ISO `AAAA-MM-DD`; a data final é inclusiva. A referência temporal disponível na view é `ultima_transmissao`, que representa o último recebimento consolidado, não o histórico de eventos.
-- Os filtros afetam todos os indicadores de cobertura e o mapa; o campo Município é uma busca local na lista de pendências.
+- Os filtros de **versão e período** afetam os indicadores estaduais e gráficos. O filtro **Município/Unidade** detalha os componentes locais sem reduzir os quatro cartões estaduais ou a recência estadual.
 - **Atenção à semântica temporal:** a view representa a **última transmissão consolidada**, não o histórico de todos os lotes. Um filtro de mês não indica necessariamente todos os municípios que enviaram naquele mês.
 
 A API aceita apenas consultas parametrizadas `SELECT`, com transação read-only e timeout SQL. O GeoJSON municipal continua sendo referência independente de cobertura total. Para manter a API saudável, a consulta de versões também tem timeout de 15 segundos.
 
-**Recência:** o painel apresenta quatro cards (até 7 dias, 8 a 30 dias, acima de 30 dias e sem transmissão identificada), calculados a partir de `ultima_transmissao` no conjunto de municípios exibidos. Os percentuais usam o total do recorte atual. A classificação pode mudar com a passagem dos dias sem nova transmissão, mesmo sem atualização do banco.
+**Recência:** o painel apresenta quatro cards (até 7 dias, 8 a 30 dias, acima de 30 dias e sem transmissão identificada), calculados a partir de `ultima_transmissao` no conjunto **estadual** após filtros de versão/período. Os percentuais usam o total estadual do recorte atual. A classificação pode mudar com a passagem dos dias sem nova transmissão, mesmo sem atualização do banco.
 
 **Visualização de unidade:** ao selecionar um CNES georreferenciado, o mapa oculta os polígonos de cobertura e todos os demais pins, mantendo apenas o pin daquela unidade e seu popup. Ao limpar a seleção, a visão cartográfica municipal é restaurada.
 
-**Limites da POC:** A seleção de município calcula uma cobertura de 0% ou 100% para um município (não é mais a taxa estadual); use Todos os municípios para a cobertura estadual. O painel é de homologação; a publicação pública exige autenticação, HTTPS e revisão de acesso ao banco.
+**Limites do projeto:** A seleção de município mantém os indicadores estaduais e exibe um resumo CNES municipal adicional. O percentual municipal é uma razão entre estabelecimentos cadastrados e estabelecimentos com recepção identificada no recorte, não cobertura assistencial. A publicação pública exige HTTPS, controles de acesso e revisão dos dados administrativos expostos.
