@@ -127,7 +127,6 @@ def distribuicao_versoes(
     SELECT COALESCE(versao_pec, 'Não identificada') AS versao, COUNT(*)::int
     FROM registros GROUP BY COALESCE(versao_pec, 'Não identificada')
     ORDER BY COUNT(*) DESC, versao
-    LIMIT 30
     """
     try:
         with psycopg.connect(
