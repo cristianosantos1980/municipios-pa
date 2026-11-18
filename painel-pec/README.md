@@ -91,6 +91,10 @@ O texto **“CNES - Última atualização”** não usa mais uma data fixa no fr
 
 **Semântica:** `atualizado_em` é a data registrada na tabela analítica do cadastro CNES do Pará; **não equivale necessariamente à competência oficial do CNES, ao horário do ETL do PEC ou à data da última recepção de dados do PEC**. A atualização periódica do painel e o clique em Atualizar consultam novamente a referência.
 
+## Limpeza individual e continuidade da seleção
+
+Os campos de **Município** e **Unidade de Saúde** possuem botão **×** próprio: ao utilizá-lo, o valor do campo é removido, o foco retorna à pesquisa e as opções correspondentes são reabertas imediatamente. A limpeza do município apresenta novamente todos os municípios e desmarca a unidade anteriormente vinculada; a limpeza da unidade mantém o município e reabre a lista de CNES daquele município. O botão de lixeira permanece reservado à limpeza **geral**. Para versão e período, utilizar, respectivamente, **Todas as versões** e **Todo o período** no próprio seletor.
+
 ## Filtros
 
 - **Versão PEC**: lista obtida por `GET /api/versoes`; filtra `versao_pec` de `analytics.vw_pec_cnes`.
