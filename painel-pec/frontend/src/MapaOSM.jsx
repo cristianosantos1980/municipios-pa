@@ -33,13 +33,16 @@ function pinIcon(positive, isUnit=false, municipalityStatus=null) {
 }
 
 /** Os polígonos são do PARA.geojson; os pins das unidades são coordenadas CNES. */
-export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], selectedUnidade=''}) {
+export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], selectedUnidade='', onToggleUnidade}) {
   const el=useRef(null);
   const mapRef=useRef(null);
   const polygonRef=useRef(null);
   const municipioPinsRef=useRef(null);
   const unidadePinsRef=useRef(null);
   const unidadeMarkerByCnesRef=useRef(new Map());
+  // O callback atualizado é mantido em ref, evitando recriar todos os marcadores a cada render.
+  const alternarUnidadeRef=useRef(onToggleUnidade);
+  alternarUnidadeRef.current=onToggleUnidade;
 
   useEffect(()=>{
     if(!el.current)return;
@@ -165,6 +168,8 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
         'CNES: '+esc(cnes)+'<br>'+status+
         '<br>Versão PEC: '+esc(unidade.versao_pec||'Não identificada')+
         (unidade.ultima_transmissao?'<br>Última recepção de dados: '+esc(unidade.ultima_transmissao):''));
+      // O mesmo pin alterna entre selecionar e desselecionar o CNES no mapa.
+      marker.on('click',()=>alternarUnidadeRef.current?.(cnes));
       marker.addTo(layer);
       unidadeMarkerByCnesRef.current.set(String(cnes),marker);
     }
