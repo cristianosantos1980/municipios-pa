@@ -588,3 +588,26 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 @media(prefers-reduced-motion:reduce){
  .ux-help-overlay,.ux-help-dialog{animation:none;backdrop-filter:none}
 }
+
+/* Tooltip acessível do gráfico: ao aproximar o cursor, focar pelo teclado ou tocar,
+   exibe a data e quantos municípios têm sua última recepção naquele dia. */
+.ux-history-plot{position:relative;width:100%;min-width:0}
+.ux-history .ux-history-plot>svg{display:block;width:100%;height:150px;overflow:visible}
+.ux-history-plot rect[role="button"]{cursor:crosshair;outline:none}
+.ux-history-plot rect[role="button"]:focus-visible{stroke:#0f66b0;stroke-width:1.5;stroke-dasharray:3 2}
+.ux-history-tooltip{
+ position:absolute;z-index:5;transform:translate(-50%,calc(-100% - 13px));
+ min-width:140px;max-width:175px;display:flex;flex-direction:column;align-items:center;
+ gap:3px;padding:8px 11px;border-radius:8px;background:#153d6b;color:#fff;
+ border:1px solid #80b3e4;box-shadow:0 5px 16px rgba(17,48,86,.23);
+ font-size:12px;line-height:1.3;white-space:nowrap;pointer-events:none;
+ animation:ux-history-tooltip-in .14s ease-out;
+}
+.ux-history-tooltip strong{font-size:12px;font-weight:800}
+.ux-history-tooltip span{font-size:12px}
+.ux-history-tooltip::after{
+ content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;
+ background:#153d6b;transform:translateX(-50%) rotate(45deg);border-radius:1px;
+}
+@keyframes ux-history-tooltip-in{from{opacity:0;transform:translate(-50%,calc(-100% - 7px))}to{opacity:1;transform:translate(-50%,calc(-100% - 13px))}}
+@media(prefers-reduced-motion:reduce){.ux-history-tooltip{animation:none}}
