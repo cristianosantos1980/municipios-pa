@@ -237,8 +237,10 @@ def unidades(
              ORDER BY cnes, atualizado_em DESC NULLS LAST
         ),
         transmissoes AS (
-            SELECT cnes::text AS cnes,
-                   MAX(ultima_transmissao) AS ultima
+            -- Uma única linha por CNES, preservando a versão associada à
+            -- última recepção do recorte (MAX isolado perderia esse vínculo).
+            SELECT DISTINCT ON (cnes::text)
+                   cnes::text AS cnes, ultima_transmissao AS ultima, versao_pec
               FROM analytics.vw_pec_cnes
              WHERE uf = '15'
                AND municipio_ibge_cnes::text IN (%s, %s)
@@ -246,10 +248,11 @@ def unidades(
                AND (%s::text IS NULL OR versao_pec = %s::text)
                AND (%s::date IS NULL OR ultima_transmissao >= %s::date)
                AND (%s::date IS NULL OR ultima_transmissao < (%s::date + INTERVAL '1 day'))
-             GROUP BY cnes
+             ORDER BY cnes::text, ultima_transmissao DESC NULLS LAST,
+                      versao_pec DESC NULLS LAST
         )
         SELECT e.cnes, e.estabelecimento, e.latitude, e.longitude,
-               t.ultima
+               t.ultima, t.versao_pec
           FROM estabelecimentos e
           LEFT JOIN transmissoes t ON t.cnes = e.cnes
          ORDER BY e.estabelecimento, e.cnes
@@ -271,7 +274,7 @@ def unidades(
         raise HTTPException(503, "Falha na consulta somente leitura de unidades da Analytics")
 
     resultado = []
-    for cnes, nome, latitude, longitude, ultima in registros:
+    for cnes, nome, latitude, longitude, ultima, versao_pec in registros:
         lat = float(latitude) if latitude is not None else None
         lon = float(longitude) if longitude is not None else None
         # Coordenadas fora da região plausível não são plotadas nem inventadas.
@@ -282,7 +285,8 @@ def unidades(
             "latitude": lat if coordenadas_validas else None,
             "longitude": lon if coordenadas_validas else None,
             "possui_transmissao": ultima is not None,
-            "ultima_transmissao": ultima.isoformat() if ultima else None
+            "ultima_transmissao": ultima.isoformat() if ultima else None,
+            "versao_pec": versao_pec or None
         })
     return {"municipio": municipio, "modo": "postgres", "unidades": resultado}
 
