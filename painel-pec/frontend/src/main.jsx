@@ -199,7 +199,12 @@ function PeriodoPersonalizado({inicio,fim,aberto,onApply,onCancel}){
 // As datas são texto ISO e os valores são escapados para evitar CSV inválido.
 const salvarCsv=(registros,nome)=>{
  const colunas=['ibge','municipio','cnes','situacao','ultima_recepcao'];
- const escapar=valor=>'"'+String(valor??'').replace(/"/g,'""')+'"';
+ const escapar=valor=>{
+  let texto=String(valor??'');
+  // Evita interpretação de fórmulas ao abrir o CSV em planilhas.
+  if(/^[=+@-]/.test(texto))texto="'"+texto;
+  return '"'+texto.replace(/"/g,'""')+'"';
+ };
  const linhas=[['Código IBGE','Município','CNES com recepção','Situação','Última recepção'],...registros.map(r=>[r.ibge,r.municipio,r.cnes,r.cobertura?'Com recepção':'Sem recepção',r.ultima_transmissao||''])];
  const arquivo='\uFEFF'+linhas.map(l=>l.map(escapar).join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([arquivo],{type:'text/csv;charset=utf-8;'}));
