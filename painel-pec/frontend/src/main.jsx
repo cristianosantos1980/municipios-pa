@@ -252,7 +252,8 @@ function App(){
        [versoesDistribuicao,setVersoesDistribuicao]=useState(null),
        [carregandoDistribuicao,setCarregandoDistribuicao]=useState(false),
        [erroDistribuicao,setErroDistribuicao]=useState(''),
-       [ajudaAberta,setAjudaAberta]=useState(false);
+       [ajudaAberta,setAjudaAberta]=useState(false),
+       [mostrarEstabelecimentos,setMostrarEstabelecimentos]=useState(false);
  const [calendarioAberto,setCalendarioAberto]=useState(false);
  const [atualizando,setAtualizando]=useState(false);
  const [avisoAtualizacao,setAvisoAtualizacao]=useState('');
@@ -348,6 +349,8 @@ function App(){
  },[municipio,versao,dataInicio,dataFim,lastRefresh]);
  const rows=payload?.municipios||[];
  const filtered=useMemo(()=>municipio?rows.filter(r=>r.ibge===municipio):rows,[rows,municipio]);
+ // Ao trocar o município, recolhe a lista para evitar exibir CNES do recorte anterior.
+ useEffect(()=>{setMostrarEstabelecimentos(false)},[municipio]);
  // Indicadores executivos permanecem estaduais mesmo com municipio/unidade selecionados.
  const summary=payload?.resumo||{total:144,mapeados:0,pendentes:0,percentual:0};
  const missing=filtered.filter(x=>!x.cobertura);
@@ -410,6 +413,7 @@ function App(){
      <PainelTitulo icone="location" titulo="Resumo do Município"/>
      {selectedRow?<div className="ux-card-body">
        <h3 className="ux-municipality-name">{selectedRow.municipio}</h3><p className="ux-ibge">Código IBGE: {selectedRow.ibge}</p>
+       {carregandoUnidades&&<p className="ux-local-footnote">Atualizando informações das unidades de saúde...</p>}
        <div className="ux-local-metrics">
         <div className="ux-local-metric ux-unit-blue"><UiIcon name="building" size={23}/><span>Unidades CNES<strong>{n(unidades.length)}</strong></span></div>
         <div className="ux-local-metric ux-unit-green"><UiIcon name="mapped" size={23}/><span>Com recepção<strong>{n(unidades.filter(u=>u.possui_transmissao).length)}</strong></span></div>
@@ -417,13 +421,19 @@ function App(){
         <div className="ux-local-metric ux-unit-violet"><UiIcon name="coverage" size={23}/><span>Cobertura CNES<strong>{unidades.length?(unidades.filter(u=>u.possui_transmissao).length/unidades.length*100).toFixed(1).replace('.',','):'0,0'}%</strong></span></div>
        </div>
        <div className="ux-local-last"><UiIcon name="calendar" size={23}/><span>Última recepção identificada<strong>{receberDataHora(selectedRow.ultima_transmissao).data||'Não identificada'}</strong></span></div>
-       <button type="button" className="ux-unit-action" onClick={()=>document.querySelector('.municipality-table-panel')?.scrollIntoView({behavior:'smooth',block:'center'})}>Ver situação do município</button>
+       <button type="button" className="ux-unit-action" onClick={()=>setMostrarEstabelecimentos(v=>!v)} aria-expanded={mostrarEstabelecimentos}>{mostrarEstabelecimentos?'Ocultar estabelecimentos':'Ver estabelecimentos do município'}</button>
+       {mostrarEstabelecimentos&&<div className="ux-establishment-list" aria-label="Estabelecimentos CNES do município">
+        {carregandoUnidades?<p>Carregando unidades...</p>:erroUnidades?<p>Não foi possível consultar as unidades.</p>:!unidades.length?<p>Nenhum estabelecimento cadastrado encontrado.</p>:
+        unidades.map(u=><button key={u.cnes} type="button" className={String(unidade)===String(u.cnes)?'ux-establishment-current':''} onClick={()=>setUnidade(u.cnes)} title={u.latitude==null?'Sem coordenadas para localizar no mapa':'Localizar unidade no mapa'}>
+         <span><strong>{u.estabelecimento}</strong><small>CNES {u.cnes} · PEC {u.versao_pec||'Não identificada'}{u.latitude==null?' · Sem coordenadas':''}</small></span><UiIcon name={u.possui_transmissao?'mapped':'missing'} size={19}/>
+        </button>)}
+       </div>}
        <p className="ux-local-footnote">Cobertura CNES calculada com as unidades cadastradas no município. Não indica cobertura assistencial.</p>
       </div>:<div className="ux-card-body ux-select-municipality"><UiIcon name="location" size={40}/><strong>Selecione um município</strong><p>Escolha um município no filtro superior para consultar unidades CNES e situação da recepção de dados.</p><span>Os indicadores estaduais permanecem disponíveis.</span></div>}
     </article>
     <article className="ux-card ux-map"><PainelTitulo icone="map" titulo="Cobertura Territorial por Município"/>
      <div className="ux-map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div>
-     <div className="ux-map-legend"><span><i className="dot green"/> Com recepção de dados</span><span><i className="dot red"/> Sem recepção de dados</span></div>
+     <div className="ux-map-legend"><span><i className="dot ux-legend-recent"/> Até 7 dias ({recencia.find(c=>c.key==='recent')?.count||0})</span><span><i className="dot ux-legend-attention"/> 8 a 30 dias ({recencia.find(c=>c.key==='attention')?.count||0})</span><span><i className="dot ux-legend-late"/> Mais de 30 dias ({recencia.find(c=>c.key==='late')?.count||0})</span><span><i className="dot ux-legend-none"/> Sem registro ({recencia.find(c=>c.key==='none')?.count||0})</span></div>
     </article>
     <div className="ux-dashboard-side">
      <DistribuicaoVersoes dados={versoesDistribuicao} carregando={carregandoDistribuicao} erro={erroDistribuicao}/>
