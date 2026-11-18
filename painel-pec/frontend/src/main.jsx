@@ -31,7 +31,12 @@ function UiIcon({name,size=24}){
   late:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M7.4 18.6 17.7 5.5"/><path d="M4.4 5.5 18.9 19"/></>,
   none:<><path d="M3 9a15 15 0 0 1 18 0M6 12a10 10 0 0 1 12 0M9 15a5 5 0 0 1 6 0M12 19h.01M3 3l18 18"/></>,
   clear:<><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></>,
-  reload:<><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 5M4 12l2 5a7 7 0 0 0 12.5-2"/></>
+  reload:<><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 5M4 12l2 5a7 7 0 0 0 12.5-2"/></>,
+  info:<><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></>,
+  download:<><path d="M12 3v12m-4-4 4 4 4-4M4 18v3h16v-3"/></>,
+  chart:<><path d="M3 20h18M6 17V9M12 17V4M18 17v-6"/></>,
+  location:<><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></>
+
  };
  return <svg {...base}>{shapes[name]||shapes.alert}</svg>;
 }
@@ -189,6 +194,51 @@ function PeriodoPersonalizado({inicio,fim,aberto,onApply,onCancel}){
   </div>
  </div>;
 }
+
+// Exportação local de indicadores administrativos já retornados pela API.
+// As datas são texto ISO e os valores são escapados para evitar CSV inválido.
+const salvarCsv=(registros,nome)=>{
+ const colunas=['ibge','municipio','cnes','situacao','ultima_recepcao'];
+ const escapar=valor=>'"'+String(valor??'').replace(/"/g,'""')+'"';
+ const linhas=[['Código IBGE','Município','CNES com recepção','Situação','Última recepção'],...registros.map(r=>[r.ibge,r.municipio,r.cnes,r.cobertura?'Com recepção':'Sem recepção',r.ultima_transmissao||''])];
+ const arquivo='\uFEFF'+linhas.map(l=>l.map(escapar).join(';')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([arquivo],{type:'text/csv;charset=utf-8;'}));
+ const link=document.createElement('a');link.href=url;link.download=nome;
+ document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+};
+const infoKpis={
+ total:'Quantidade oficial de municípios do Pará, conforme a referência territorial IBGE/GeoJSON.',
+ mapped:'Municípios com ao menos um registro de recepção identificado na Analytics, no recorte aplicado.',
+ missing:'Municípios sem registro identificado na Analytics no recorte aplicado. Não significa que nunca enviaram dados.',
+ coverage:'Percentual dos municípios com recepção identificada sobre o total de 144 municípios do Pará.'
+};
+function PainelTitulo({icone,titulo,ajuda}){
+ return <div className="ux-section-bar"><span className="ux-section-bar-icon"><UiIcon name={icone} size={20}/></span><h2>{titulo}</h2>{ajuda&&<button type="button" className="ux-info-icon" title={ajuda} aria-label={'Sobre '+titulo}><UiIcon name="info" size={18}/></button>}</div>;
+}
+function DistribuicaoVersoes({dados,carregando,erro}){
+ const itens=dados?.versoes||[],maximo=Math.max(1,...itens.map(i=>i.quantidade));
+ return <article className="ux-card ux-versions"><PainelTitulo icone="chart" titulo="Distribuição das Versões do PEC" ajuda="Cada CNES é contado uma vez pela versão do registro mais recente que corresponde aos filtros."/>
+  <div className="ux-card-body">
+   {carregando?<p className="ux-empty">Consultando versões PEC...</p>:erro?<p className="ux-empty">Distribuição indisponível. {erro}</p>:!itens.length?<p className="ux-empty">Nenhuma versão identificada no período.</p>:
+    <div className="ux-version-list">{itens.slice(0,8).map(item=><div className="ux-version-row" key={item.versao}><strong title={item.versao}>{item.versao}</strong><div className="ux-version-track"><div style={{width:(item.quantidade/maximo*100)+'%'}}/></div><span>{n(item.quantidade)} ({dados.total_cnes?(item.quantidade/dados.total_cnes*100).toFixed(1).replace('.',','):'0'}%)</span></div>)}</div>}
+  </div>
+ </article>;
+}
+function UltimasRecepcoes({rows}){
+ // A view fornece o último registro por município, NÃO uma série histórica de envios.
+ const dias=Array.from({length:30},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-29+i);return dateISO(d)});
+ const contagens=dias.map(d=>rows.filter(r=>r.ultima_transmissao&&String(r.ultima_transmissao).slice(0,10)===d).length);
+ const maximo=Math.max(1,...contagens);
+ const pontos=contagens.map((v,i)=>(20+i*(560/29))+','+(145-v/maximo*110)).join(' ');
+ return <article className="ux-card ux-history"><PainelTitulo icone="chart" titulo="Últimas Recepções (30 dias)" ajuda="Distribuição dos últimos registros municipais por data; não é histórico de todas as transmissões ou evolução acumulada."/>
+ <div className="ux-card-body"><svg viewBox="0 0 600 170" role="img" aria-label="Quantidade de municípios por data do último registro nos últimos 30 dias" preserveAspectRatio="none">
+  {[35,90,145].map(y=><line key={y} x1="20" y1={y} x2="580" y2={y} stroke="#d9e4f0" strokeWidth="1"/>)}
+  <polyline points={pontos} stroke="#1d82d5" strokeWidth="3" strokeLinejoin="round" fill="none"/>
+  {contagens.map((v,i)=><circle key={i} cx={20+i*(560/29)} cy={145-v/maximo*110} r="2.5" fill="#197fd1"/>)}
+ </svg>
+ <div className="ux-chart-labels"><span>{dias[0].slice(8,10)+'/'+dias[0].slice(5,7)}</span><span>Últimos registros municipais por dia</span><span>{dias[29].slice(8,10)+'/'+dias[29].slice(5,7)}</span></div>
+ </div></article>;
+}
 function App(){
  const [geo,setGeo]=useState(null),[payload,setPayload]=useState(null),
        [error,setError]=useState(''),[municipio,setMunicipio]=useState(''),
@@ -198,7 +248,11 @@ function App(){
        [unidade,setUnidade]=useState(''),[unidades,setUnidades]=useState([]),
        [carregandoUnidades,setCarregandoUnidades]=useState(false),
        [erroUnidades,setErroUnidades]=useState(''),
-       [cnesAtualizadoEm,setCnesAtualizadoEm]=useState(null);
+       [cnesAtualizadoEm,setCnesAtualizadoEm]=useState(null),
+       [versoesDistribuicao,setVersoesDistribuicao]=useState(null),
+       [carregandoDistribuicao,setCarregandoDistribuicao]=useState(false),
+       [erroDistribuicao,setErroDistribuicao]=useState(''),
+       [ajudaAberta,setAjudaAberta]=useState(false);
  const [calendarioAberto,setCalendarioAberto]=useState(false);
  const [atualizando,setAtualizando]=useState(false);
  const [avisoAtualizacao,setAvisoAtualizacao]=useState('');
@@ -243,6 +297,21 @@ function App(){
  };
  useEffect(()=>{fetch('/PARA.geojson').then(r=>r.json()).then(setGeo).catch(e=>setError(String(e)));fetch('/api/versoes').then(r=>r.ok?r.json():Promise.reject(Error('Falha ao listar versões PEC'))).then(data=>setVersoes(data.versoes)).catch(e=>setError(String(e)));},[]);
  useEffect(()=>{refresh();const id=setInterval(refresh,30*60*1000);return()=>clearInterval(id)},[versao,dataInicio,dataFim]);
+ // Agregação independente dos municípios selecionados: os gráficos são estaduais.
+ useEffect(()=>{
+  const controller=new AbortController();
+  const params=new URLSearchParams();
+  if(versao)params.set('versao',versao);
+  if(dataInicio)params.set('data_inicio',dataInicio);
+  if(dataFim)params.set('data_fim',dataFim);
+  setCarregandoDistribuicao(true);setErroDistribuicao('');
+  fetch('/api/versoes/distribuicao?'+params.toString(),{signal:controller.signal,cache:'no-store'})
+   .then(async r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+   .then(setVersoesDistribuicao)
+   .catch(e=>{if(e.name!=='AbortError')setErroDistribuicao('Verifique a consulta ou o tempo limite da API.')})
+   .finally(()=>{if(!controller.signal.aborted)setCarregandoDistribuicao(false)});
+  return()=>controller.abort();
+ },[versao,dataInicio,dataFim,lastRefresh]);
  // Mantém a data do cadastro CNES desacoplada dos filtros e das datas de recepção PEC.
  // A consulta só é repetida após uma atualização bem-sucedida da cobertura.
  useEffect(()=>{
@@ -310,9 +379,8 @@ function App(){
   setCalendarioAberto(false);
  };
  const cancelarPeriodo=()=>{setCalendarioAberto(false);setPeriodo(periodoAnteriorRef.current)};
- return <><header className="top"><span>SESPA <small>│</small> Saúde Digital</span><span>Centralizador Estadual · Monitoramento PEC e-SUS APS</span></header>
- <main>
-  <div className="heading"><div className="mark" aria-hidden="true"><UiIcon name="monitoring" size={38}/></div><div><h1>Monitoramento da Recepção de Dados - PEC e-SUS APS</h1><p>Centralizador Estadual do e-SUS APS | SESPA - Pará</p></div><div className="institution">★ SESPA　│　GOVERNO DO PARÁ</div></div>
+ return <><header className="ux-top"><div className="ux-brand"><span className="ux-logo"><UiIcon name="monitoring" size={40}/></span><div><h1>Monitoramento da Recepção de Dados - PEC e-SUS APS</h1><p>Centralizador Estadual do e-SUS APS | SESPA - Pará</p></div></div><div className="ux-sespa"><strong>SESPA</strong><small>Secretaria de Estado<br/>de Saúde Pública</small></div></header>
+ <main className="ux-main">
   <section className="filters"><label>Município <MunicipioPesquisa rows={rows} value={municipio} onChange={codigo=>{setMunicipio(codigo);setUnidade('')}}/></label><label>Unidade de Saúde <UnidadePesquisa municipio={municipio} unidades={unidades} value={unidade} carregando={carregandoUnidades} erro={erroUnidades} onSelecionar={u=>{if(!u){setUnidade('');return}if(u.municipio_ibge&&u.municipio_ibge!==municipio)setMunicipio(u.municipio_ibge);setUnidade(u.cnes)}}/></label><label>Versão PEC <select value={versao} onChange={e=>setVersao(e.target.value)}><option value="">Todas as versões</option>{versoes.map(v=><option key={v} value={v}>{v}</option>)}</select></label><div className="period-control" ref={calendarioContainerRef}>
     <label className="period-filter">Data da Recepção
       {/* O período aplicado aparece na própria opção selecionada, sem criar uma segunda linha. */}
@@ -321,8 +389,10 @@ function App(){
     {periodo==='custom'&&<div id="calendario-periodo" className={'calendar-popover'+(calendarioAberto?' calendar-popover-open':'')} aria-hidden={!calendarioAberto}>
       <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} aberto={calendarioAberto} onApply={aplicarPeriodo} onCancel={cancelarPeriodo}/>
     </div>}
-  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className={'filter-icon-button refresh-button'+(atualizando?' refresh-button-loading':'')} aria-label={atualizando?'Atualizando dados':'Atualizar dados'} title={atualizando?'Atualizando dados...':'Atualizar dados'} disabled={atualizando} onClick={()=>refresh(true)}><span className="refresh-icon"><UiIcon name="reload" size={22}/></span></button></div></section>
+  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className={'filter-icon-button refresh-button'+(atualizando?' refresh-button-loading':'')} aria-label={atualizando?'Atualizando dados':'Atualizar dados'} title={atualizando?'Atualizando dados...':'Atualizar dados'} disabled={atualizando} onClick={()=>refresh(true)}><span className="refresh-icon"><UiIcon name="reload" size={22}/></span></button><button type="button" className="ux-export" title="Exportar resultados municipais em CSV" onClick={()=>salvarCsv(filtered,'monitoramento-pec-municipios.csv')}><UiIcon name="download" size={19}/> Exportar CSV</button><button type="button" className="ux-help-btn" onClick={()=>setAjudaAberta(v=>!v)} aria-expanded={ajudaAberta}><UiIcon name="info" size={19}/> Ajuda</button></div></section>
   {avisoAtualizacao&&<div className="refresh-success" role="status" aria-live="polite"><UiIcon name="mapped" size={18}/>{avisoAtualizacao}</div>}
+  {ajudaAberta&&<div className="ux-help" role="region" aria-label="Ajuda dos indicadores"><button type="button" onClick={()=>setAjudaAberta(false)} aria-label="Fechar ajuda">×</button><strong>Como interpretar o painel</strong><p>Com recepção: município com pelo menos um registro identificado na Analytics. Sem recepção: não foi encontrado registro no recorte, o que não significa ausência absoluta de envios. Os indicadores superiores são estaduais; a seleção de município detalha o mapa e o resumo local. O gráfico de 30 dias utiliza datas das últimas recepções registradas, não histórico de todos os envios.</p></div>}
+
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
   {erroUnidades&&<div className="error">Unidades de Saúde: {erroUnidades}. O mapa municipal continua disponível.</div>}
@@ -330,10 +400,10 @@ function App(){
   {selectedRow&&<div className="filter-note">Município selecionado: <strong>{selectedRow.municipio}</strong> ({selectedRow.ibge}). {unidades.length?'Unidades cadastradas: '+unidades.length+'. ':''}Selecione uma unidade para localizar seu ponto no mapa. As cores indicam recepção de dados identificada na Analytics, não a situação cadastral do CNES.</div>}
   {unidade&&unidades.find(u=>u.cnes===unidade)?.latitude==null&&<div className="filter-note">Esta unidade não possui coordenadas geográficas válidas no cadastro. Não é possível localizar seu pin com precisão.</div>}
   <section className="metrics">
-   <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>Municípios</h3><strong>{n(summary.total)}</strong><span>Referência estadual (IBGE)</span></div></article>
-   <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Com recepção</h3><strong>{n(summary.mapeados)}</strong><span>Com dados recepcionados</span></div></article>
-   <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Sem recepção</h3><strong>{n(summary.pendentes)}</strong><span>Sem dados recepcionados na Analytics</span></div></article>
-   <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>Cobertura</h3><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
+   <article className="metric-total"><span className="metric-icon"><UiIcon name="building" size={28}/></span><div><h3>Municípios</h3><button type="button" className="ux-kpi-help" title={infoKpis.total} aria-label="Sobre Municípios"><UiIcon name="info" size={18}/></button><strong>{n(summary.total)}</strong><span>Referência estadual (IBGE)</span></div></article>
+   <article className="metric-mapped"><span className="metric-icon"><UiIcon name="mapped" size={28}/></span><div><h3>Com recepção</h3><button type="button" className="ux-kpi-help" title={infoKpis.mapped} aria-label="Sobre Com recepção"><UiIcon name="info" size={18}/></button><strong>{n(summary.mapeados)}</strong><span>Com dados recepcionados</span></div></article>
+   <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Sem recepção</h3><button type="button" className="ux-kpi-help" title={infoKpis.missing} aria-label="Sobre Sem recepção"><UiIcon name="info" size={18}/></button><strong>{n(summary.pendentes)}</strong><span>Sem dados recepcionados na Analytics</span></div></article>
+   <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>Cobertura</h3><button type="button" className="ux-kpi-help" title={infoKpis.coverage} aria-label="Sobre Cobertura"><UiIcon name="info" size={18}/></button><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
   <section className="boards">
     <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com recepção de dados　 <span className="dot red"/> Sem recepção de dados</footer></article>
