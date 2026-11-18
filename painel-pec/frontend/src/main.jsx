@@ -262,6 +262,20 @@ function App(){
  const [calendarioAberto,setCalendarioAberto]=useState(false);
  const [atualizando,setAtualizando]=useState(false);
  const [avisoAtualizacao,setAvisoAtualizacao]=useState('');
+ const ajudaBotaoRef=useRef(null);
+ const ajudaDialogoRef=useRef(null);
+ // A ajuda funciona como diálogo flutuante: não desloca os filtros nem os cards.
+ // Esc, clique na área externa e botão de fechar devem encerrá-la.
+ useEffect(()=>{
+  if(!ajudaAberta)return;
+  const fecharEsc=evento=>{if(evento.key==='Escape')setAjudaAberta(false)};
+  document.addEventListener('keydown',fecharEsc);
+  ajudaDialogoRef.current?.focus();
+  return()=>{
+   document.removeEventListener('keydown',fecharEsc);
+   ajudaBotaoRef.current?.focus();
+  };
+ },[ajudaAberta]);
  // Mostra confirmação temporária apenas em atualizações solicitadas pelo usuário.
  useEffect(()=>{
   if(!avisoAtualizacao)return;
@@ -397,9 +411,21 @@ function App(){
     {periodo==='custom'&&<div id="calendario-periodo" className={'calendar-popover'+(calendarioAberto?' calendar-popover-open':'')} aria-hidden={!calendarioAberto}>
       <PeriodoPersonalizado inicio={dataInicio} fim={dataFim} aberto={calendarioAberto} onApply={aplicarPeriodo} onCancel={cancelarPeriodo}/>
     </div>}
-  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className={'filter-icon-button refresh-button'+(atualizando?' refresh-button-loading':'')} aria-label={atualizando?'Atualizando dados':'Atualizar dados'} title={atualizando?'Atualizando dados...':'Atualizar dados'} disabled={atualizando} onClick={()=>refresh(true)}><span className="refresh-icon"><UiIcon name="reload" size={22}/></span></button><button type="button" className="ux-export" title="Exportar resultados municipais em CSV" onClick={()=>salvarCsv(filtered,'monitoramento-pec-municipios.csv')}><UiIcon name="download" size={19}/> Exportar CSV</button><button type="button" className="ux-help-btn" onClick={()=>setAjudaAberta(v=>!v)} aria-expanded={ajudaAberta}><UiIcon name="info" size={19}/> Ajuda</button></div></section>
+  </div><div className="filter-actions"><button type="button" className="filter-icon-button" aria-label="Limpar filtros" title="Limpar filtros" onClick={()=>{setVersao('');setDataInicio('');setDataFim('');setPeriodo('all');periodoAnteriorRef.current='all';setCalendarioAberto(false);setMunicipio('');setUnidade('')}}><UiIcon name="clear" size={22}/></button><button type="button" className={'filter-icon-button refresh-button'+(atualizando?' refresh-button-loading':'')} aria-label={atualizando?'Atualizando dados':'Atualizar dados'} title={atualizando?'Atualizando dados...':'Atualizar dados'} disabled={atualizando} onClick={()=>refresh(true)}><span className="refresh-icon"><UiIcon name="reload" size={22}/></span></button><button type="button" className="ux-export" title="Exportar resultados municipais em CSV" onClick={()=>salvarCsv(filtered,'monitoramento-pec-municipios.csv')}><UiIcon name="download" size={19}/> Exportar CSV</button><button type="button" className="ux-help-btn" ref={ajudaBotaoRef} onClick={()=>setAjudaAberta(v=>!v)} aria-haspopup="dialog" aria-controls="ux-ajuda-dialogo" aria-expanded={ajudaAberta}><UiIcon name="info" size={19}/> Ajuda</button></div></section>
   {avisoAtualizacao&&<div className="refresh-success" role="status" aria-live="polite"><UiIcon name="mapped" size={18}/>{avisoAtualizacao}</div>}
-  {ajudaAberta&&<div className="ux-help" role="region" aria-label="Ajuda dos indicadores"><button type="button" onClick={()=>setAjudaAberta(false)} aria-label="Fechar ajuda">×</button><strong>Como interpretar o painel</strong><p>Com recepção: município com pelo menos um registro identificado na Analytics. Sem recepção: não foi encontrado registro no recorte, o que não significa ausência absoluta de envios. Os indicadores superiores são estaduais; a seleção de município detalha o mapa e o resumo local. O gráfico de 30 dias utiliza datas das últimas recepções registradas, não histórico de todos os envios.</p></div>}
+  {ajudaAberta&&<div className="ux-help-overlay" onMouseDown={evento=>{if(evento.target===evento.currentTarget)setAjudaAberta(false)}}>
+   <section id="ux-ajuda-dialogo" className="ux-help-dialog" role="dialog" aria-modal="true" aria-labelledby="ux-help-title" tabIndex={-1} ref={ajudaDialogoRef}>
+    <div className="ux-help-heading"><span><UiIcon name="info" size={22}/> <strong id="ux-help-title">Como interpretar o painel</strong></span><button type="button" onClick={()=>setAjudaAberta(false)} aria-label="Fechar ajuda" title="Fechar ajuda">×</button></div>
+    <div className="ux-help-content">
+     <p><strong>Com recepção:</strong> município com pelo menos um registro identificado na Analytics, conforme os filtros aplicados.</p>
+     <p><strong>Sem recepção:</strong> não foi encontrado registro no recorte. Isso não significa que o município nunca enviou dados.</p>
+     <p><strong>Indicadores estaduais:</strong> continuam mostrando o total do Pará quando um município é selecionado. O resumo municipal e o mapa exibem o detalhamento local.</p>
+     <p><strong>Últimas Recepções (30 dias):</strong> distribuição dos municípios segundo a data de sua última recepção identificada, e não o histórico completo de envios nem uma evolução acumulada.</p>
+     <p><strong>Versões PEC:</strong> quantidade de CNES por versão de seu último registro identificado no recorte consultado, não um inventário de todas as instalações.</p>
+    </div>
+    <div className="ux-help-actions"><button type="button" onClick={()=>setAjudaAberta(false)}>Entendi</button></div>
+   </section>
+  </div>}
 
   {payload?.modo==='demo'&&<div className="warning">AMBIENTE DEMONSTRATIVO — dados simulados. Não utilizar os indicadores para gestão.</div>}
   {error&&<div className="error">{error}</div>}
