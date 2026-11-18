@@ -96,13 +96,14 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
  },[buscaDigitada,aberto,texto]);
  useEffect(()=>{if(!value){setTexto('');return}const u=unidades.find(u=>u.cnes===value);if(u)setTexto(u.estabelecimento)},[value,unidades]);
  const escolher=u=>{
-   const selecionada=u||null;
+   // Comportamento de alternância: clicar no CNES já selecionado o desmarca.
+   const selecionada=u&&String(u.cnes)!==String(value)?u:null;
    setTexto(selecionada?.estabelecimento||'');
    setBuscaDigitada(false);
    setBusca([]);
    setErroBusca('');
    setBuscando(false);
-   // Ao limpar uma unidade, exibir novamente a lista do município já selecionado.
+   // Ao desmarcar, a lista municipal volta a aparecer sem limpar outros filtros.
    setAberto(!selecionada&&Boolean(municipio));
    onSelecionar(selecionada);
  };
@@ -455,7 +456,7 @@ function App(){
        <button type="button" className="ux-unit-action" onClick={()=>setMostrarEstabelecimentos(v=>!v)} aria-expanded={mostrarEstabelecimentos}>{mostrarEstabelecimentos?'Ocultar estabelecimentos':'Ver estabelecimentos do município'}</button>
        {mostrarEstabelecimentos&&<div className="ux-establishment-list" aria-label="Estabelecimentos CNES do município">
         {carregandoUnidades?<p>Carregando unidades...</p>:erroUnidades?<p>Não foi possível consultar as unidades.</p>:!unidades.length?<p>Nenhum estabelecimento cadastrado encontrado.</p>:
-        unidades.map(u=><button key={u.cnes} type="button" className={String(unidade)===String(u.cnes)?'ux-establishment-current':''} onClick={()=>setUnidade(u.cnes)} title={u.latitude==null?'Sem coordenadas para localizar no mapa':'Localizar unidade no mapa'}>
+        unidades.map(u=><button key={u.cnes} type="button" className={String(unidade)===String(u.cnes)?'ux-establishment-current':''} aria-pressed={String(unidade)===String(u.cnes)} onClick={()=>setUnidade(anterior=>String(anterior)===String(u.cnes)?'':u.cnes)} title={String(unidade)===String(u.cnes)?'Desselecionar estabelecimento e restaurar o mapa do município':u.latitude==null?'Selecionar estabelecimento (sem coordenadas para localizar no mapa)':'Selecionar e localizar estabelecimento no mapa'}>
          <span><strong>{u.estabelecimento}</strong><small>CNES {u.cnes} · PEC {u.versao_pec||'Não identificada'}{u.latitude==null?' · Sem coordenadas':''}</small></span><UiIcon name={u.possui_transmissao?'mapped':'missing'} size={19}/>
         </button>)}
        </div>}
@@ -463,7 +464,7 @@ function App(){
       </div>:<div className="ux-card-body ux-select-municipality"><UiIcon name="location" size={40}/><strong>Selecione um município</strong><p>Escolha um município no filtro superior para consultar unidades CNES e situação da recepção de dados.</p><span>Os indicadores estaduais permanecem disponíveis.</span></div>}
     </article>
     <article className="ux-card ux-map"><PainelTitulo icone="map" titulo="Cobertura Territorial por Município"/>
-     <div className="ux-map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div>
+     <div className="ux-map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade} onToggleUnidade={cnes=>setUnidade(anterior=>String(anterior)===String(cnes)?'':String(cnes))}/></div>
      <div className="ux-map-legend"><span><i className="dot ux-legend-recent"/> Até 7 dias ({recencia.find(c=>c.key==='recent')?.count||0})</span><span><i className="dot ux-legend-attention"/> 8 a 30 dias ({recencia.find(c=>c.key==='attention')?.count||0})</span><span><i className="dot ux-legend-late"/> Mais de 30 dias ({recencia.find(c=>c.key==='late')?.count||0})</span><span><i className="dot ux-legend-none"/> Sem registro ({recencia.find(c=>c.key==='none')?.count||0})</span></div>
     </article>
     <div className="ux-dashboard-side">
