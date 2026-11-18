@@ -405,9 +405,32 @@ function App(){
    <article className="metric-missing"><span className="metric-icon"><UiIcon name="missing" size={28}/></span><div><h3>Sem recepção</h3><button type="button" className="ux-kpi-help" title={infoKpis.missing} aria-label="Sobre Sem recepção"><UiIcon name="info" size={18}/></button><strong>{n(summary.pendentes)}</strong><span>Sem dados recepcionados na Analytics</span></div></article>
    <article className="metric-coverage"><span className="metric-icon"><UiIcon name="coverage" size={28}/></span><div><h3>Cobertura</h3><button type="button" className="ux-kpi-help" title={infoKpis.coverage} aria-label="Sobre Cobertura"><UiIcon name="info" size={18}/></button><strong>{summary.percentual.toFixed(2).replace('.',',')}%</strong><div className="progress"><i style={{width:summary.percentual+'%'}}/></div><span>Meta de referência: 100%</span></div></article>
   </section>
-  <section className="boards">
-    <article className="geo"><div className="map-header"><h2 className="section-heading"><span className="section-icon section-icon-map"><UiIcon name="map" size={25}/></span>Cobertura Territorial por Município</h2></div><div className="map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div><footer><span className="dot green"/> Com recepção de dados　 <span className="dot red"/> Sem recepção de dados</footer></article>
-    <div className="right">
+  <section className="ux-dashboard-main">
+    <article className="ux-card ux-municipality">
+     <PainelTitulo icone="location" titulo="Resumo do Município"/>
+     {selectedRow?<div className="ux-card-body">
+       <h3 className="ux-municipality-name">{selectedRow.municipio}</h3><p className="ux-ibge">Código IBGE: {selectedRow.ibge}</p>
+       <div className="ux-local-metrics">
+        <div className="ux-local-metric ux-unit-blue"><UiIcon name="building" size={23}/><span>Unidades CNES<strong>{n(unidades.length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-green"><UiIcon name="mapped" size={23}/><span>Com recepção<strong>{n(unidades.filter(u=>u.possui_transmissao).length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-red"><UiIcon name="missing" size={23}/><span>Sem recepção<strong>{n(unidades.filter(u=>!u.possui_transmissao).length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-violet"><UiIcon name="coverage" size={23}/><span>Cobertura CNES<strong>{unidades.length?(unidades.filter(u=>u.possui_transmissao).length/unidades.length*100).toFixed(1).replace('.',','):'0,0'}%</strong></span></div>
+       </div>
+       <div className="ux-local-last"><UiIcon name="calendar" size={23}/><span>Última recepção identificada<strong>{receberDataHora(selectedRow.ultima_transmissao).data||'Não identificada'}</strong></span></div>
+       <button type="button" className="ux-unit-action" onClick={()=>document.querySelector('.municipality-table-panel')?.scrollIntoView({behavior:'smooth',block:'center'})}>Ver situação do município</button>
+       <p className="ux-local-footnote">Cobertura CNES calculada com as unidades cadastradas no município. Não indica cobertura assistencial.</p>
+      </div>:<div className="ux-card-body ux-select-municipality"><UiIcon name="location" size={40}/><strong>Selecione um município</strong><p>Escolha um município no filtro superior para consultar unidades CNES e situação da recepção de dados.</p><span>Os indicadores estaduais permanecem disponíveis.</span></div>}
+    </article>
+    <article className="ux-card ux-map"><PainelTitulo icone="map" titulo="Cobertura Territorial por Município"/>
+     <div className="ux-map-area"><MapaOSM geo={geo} rows={rows} selectedMunicipio={municipio} unidades={unidades} selectedUnidade={unidade}/></div>
+     <div className="ux-map-legend"><span><i className="dot green"/> Com recepção de dados</span><span><i className="dot red"/> Sem recepção de dados</span></div>
+    </article>
+    <div className="ux-dashboard-side">
+     <DistribuicaoVersoes dados={versoesDistribuicao} carregando={carregandoDistribuicao} erro={erroDistribuicao}/>
+     <UltimasRecepcoes rows={rows}/>
+    </div>
+   </section>
+   <section className="ux-detail-row">
       <article className="recency-panel"><h2 className="section-heading"><span className="section-icon section-icon-recency"><UiIcon name="calendar" size={25}/></span>Situação dos Municípios por Recência da Recepção de Dados</h2><div className="recency-grid">{recencia.map(c=><div key={c.key} className={'recency-card recency-'+c.key}><span className="recency-icon"><UiIcon name={c.key} size={25}/></span><div className="recency-label"><strong>{c.label}</strong><small>{c.detail}</small></div><div className="recency-count"><strong>{n(c.count)}</strong><small>{c.percentage.toFixed(2).replace('.',',')}%</small></div></div>)}</div></article>
       <article className="municipality-table-panel">
         <h2 className="section-heading"><span className="section-icon section-icon-alert"><UiIcon name="alert" size={25}/></span>{municipio?'Situação do Município Selecionado':'Municípios sem Recepção de Dados Identificada ('+missing.length+')'}</h2>
@@ -418,9 +441,18 @@ function App(){
         })}
         </tbody></table></div>
       </article>
+
+   </section>
+   <footer className="ux-footer">
+    <div className="ux-footer-explanation"><UiIcon name="info" size={20}/><span>Cobertura considerando apenas os últimos dados recepcionados e consolidados que correspondem aos filtros selecionados. Não representa todos os envios históricos do período.</span></div>
+    <div className="ux-footer-sources"><strong><UiIcon name="chart" size={19}/> Fontes e atualizações:</strong>
+     <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES: {cnesAtualizadoEm?receberDataHora(cnesAtualizadoEm).data:'Não disponível'}</a>
+     <span>Última recepção PEC: {ultimoRecebimentoFormatado.data||'Sem dados'}{ultimoRecebimentoFormatado.hora?' '+ultimoRecebimentoFormatado.hora:''}</span>
+     <span>Consulta: {lastRefresh?lastRefresh.toLocaleString('pt-BR'):'Não disponível'}</span>
+     <a href="https://pec.centralizador.saude.pa.gov.br" target="_blank" rel="noopener noreferrer">Centralizador Estadual</a>
     </div>
-  </section>
-  <p className="foot">Fonte: {payload?.modo==='postgres'?'PostgreSQL Analytics, somente leitura':'Demonstração'} · {recebimentoNoRecorte?'Última recepção de dados no recorte':'Última recepção de dados na Analytics'}: {ultimoRecebimentoFormatado.data?(ultimoRecebimentoFormatado.data+(ultimoRecebimentoFormatado.hora?' às '+ultimoRecebimentoFormatado.hora:'')):<span className="no-data">Sem dados</span>} · GeoJSON: municipios-pa · <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener noreferrer">CNES - Última atualização: {cnesAtualizadoEm?receberDataHora(cnesAtualizadoEm).data:'Não disponível'}</a> · <a href="https://pec.centralizador.saude.pa.gov.br" target="_blank" rel="noopener noreferrer">Centralizador Estadual</a></p>
+   </footer>
+
  </main></>;
 }
 createRoot(document.getElementById('root')).render(<App/>);
