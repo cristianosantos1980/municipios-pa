@@ -489,7 +489,9 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 .ux-version-track>div{height:100%;background:linear-gradient(90deg,#117bed,#3197eb)}
 .ux-empty{color:#647b94;font-size:13px;line-height:1.55;margin:12px 0}
 .ux-history .ux-card-body{padding:7px 14px 12px}
-.ux-history svg{display:block;width:100%;height:150px}
+/* Somente o SVG do gráfico ocupa a largura; o ícone do título preserva 20px.
+   A regra anterior atingia TODO svg da seção e ampliava o ícone branco de ajuda. */
+.ux-history .ux-card-body > svg{display:block;width:100%;height:150px}
 .ux-chart-labels{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#57738c}
 .ux-detail-row{margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
 .ux-detail-row>article{min-width:0;border:1px solid #cddff0;border-radius:12px;background:#fff;padding:14px;overflow:hidden}
@@ -535,3 +537,54 @@ main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.fi
 .ux-map-legend>span{display:flex;align-items:center;gap:7px;color:#254a70}
 .ux-map-legend .dot{flex:0 0 12px}
 @media(max-width:640px){.ux-map-legend{right:13px;bottom:13px;padding:8px 10px;gap:6px;max-width:195px;font-size:10px}}
+
+/* Ajuda flutuante: overlay não altera o fluxo do painel, fechando pelo fundo ou Esc. */
+.ux-help-overlay{
+ position:fixed;inset:0;z-index:11000;
+ display:flex;align-items:flex-start;justify-content:center;
+ padding:clamp(26px,9vh,110px) 16px 24px;
+ background:rgba(13,36,67,.34);
+ backdrop-filter:blur(2px);
+ overflow-y:auto;
+ animation:ux-help-overlay-in .18s ease-out both;
+}
+.ux-help-dialog{
+ width:min(630px,100%);max-height:calc(100dvh - 60px);overflow:auto;
+ background:white;color:#193b60;border:1px solid #b7d3ef;border-radius:13px;
+ box-shadow:0 24px 65px rgba(9,42,82,.28);
+ animation:ux-help-dialog-in .21s ease-out both;
+ outline:0;
+}
+.ux-help-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:14px 18px;color:white;background:linear-gradient(90deg,#0866ba,#1786d5);
+}
+.ux-help-heading span{display:inline-flex;align-items:center;gap:10px;font-size:17px}
+.ux-help-heading svg{width:22px;height:22px;flex:0 0 22px}
+.ux-help-heading button{
+ display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;
+ background:transparent;color:#fff;border:1px solid #ffffff80;
+ border-radius:8px;font-size:25px;line-height:1;cursor:pointer;
+}
+.ux-help-heading button:hover{background:#ffffff26}
+.ux-help-content{padding:16px 22px 7px;font-size:14px;line-height:1.6}
+.ux-help-content p{margin:0 0 13px}
+.ux-help-content strong{color:#124a7d}
+.ux-help-actions{display:flex;justify-content:flex-end;padding:12px 20px 17px;border-top:1px solid #e5ebf3}
+.ux-help-actions button{
+ padding:10px 22px;border:1px solid #086cbd;border-radius:8px;
+ background:#086cbd;color:#fff;font-size:14px;font-weight:750;cursor:pointer;
+}
+.ux-help-actions button:hover{background:#07599c}
+.ux-help-dialog button:focus-visible{outline:3px solid #70b4ff;outline-offset:2px}
+@keyframes ux-help-overlay-in{from{opacity:0}to{opacity:1}}
+@keyframes ux-help-dialog-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){
+ .ux-help-overlay{padding:24px 12px}
+ .ux-help-dialog{max-height:calc(100dvh - 48px)}
+ .ux-help-heading span{font-size:15px}
+ .ux-help-content{padding:14px 16px 5px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ux-help-overlay,.ux-help-dialog{animation:none;backdrop-filter:none}
+}
