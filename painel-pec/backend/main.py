@@ -92,6 +92,63 @@ def versions():
 
 
 
+@app.get("/api/versoes/distribuicao")
+def distribuicao_versoes(
+    versao: str | None = Query(default=None, max_length=40),
+    data_inicio: date | None = None,
+    data_fim: date | None = None,
+):
+    """Distribuição estadual por última versão identificada de cada CNES.
+
+    Cada unidade é contada no máximo uma vez; o resultado considera os mesmos
+    filtros de versão e recepção do painel e não representa instalações ativas.
+    """
+    if data_inicio and data_fim and data_inicio > data_fim:
+        raise HTTPException(400, "Data inicial posterior à final")
+    mode = os.getenv("DATA_MODE", "demo").lower()
+    if mode == "demo":
+        return {"versoes": [], "total_cnes": 0, "modo": "demo"}
+    if mode != "postgres":
+        raise HTTPException(500, "DATA_MODE inválido")
+
+    sql = """
+    WITH registros AS (
+      SELECT DISTINCT ON (cnes::text)
+             cnes::text AS cnes, versao_pec
+      FROM analytics.vw_pec_cnes
+      WHERE uf = '15' AND cnes IS NOT NULL
+        AND ultima_transmissao IS NOT NULL
+        AND (%s::text IS NULL OR versao_pec = %s::text)
+        AND (%s::date IS NULL OR ultima_transmissao >= %s::date)
+        AND (%s::date IS NULL OR ultima_transmissao < %s::date + INTERVAL '1 day')
+      ORDER BY cnes::text, ultima_transmissao DESC NULLS LAST,
+               versao_pec DESC NULLS LAST
+    )
+    SELECT COALESCE(versao_pec, 'Não identificada') AS versao, COUNT(*)::int
+    FROM registros GROUP BY COALESCE(versao_pec, 'Não identificada')
+    ORDER BY COUNT(*) DESC, versao
+    LIMIT 30
+    """
+    try:
+        with psycopg.connect(
+            host=os.environ["PGHOST"], port=int(os.getenv("PGPORT", "5433")),
+            dbname=os.environ["PGDATABASE"], user=os.environ["PGUSER"],
+            password=os.getenv("PGPASSWORD", ""),
+            sslmode=os.getenv("PGSSLMODE", "prefer"), connect_timeout=5,
+            options="-c default_transaction_read_only=on -c statement_timeout=15000"
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (versao, versao, data_inicio, data_inicio,
+                                  data_fim, data_fim))
+                valores = cur.fetchall()
+    except Exception:
+        raise HTTPException(503, "Falha ao consultar a distribuição de versões PEC")
+    return {
+        "versoes": [{"versao": v, "quantidade": qtd} for v, qtd in valores],
+        "total_cnes": sum(qtd for _, qtd in valores), "modo": "postgres"
+    }
+
+
 @app.get("/api/unidades/busca")
 def buscar_unidades(q: str = Query(min_length=3, max_length=80)):
     """Busca estadual, restrita ao CNES público; sem exigir município prévio."""
