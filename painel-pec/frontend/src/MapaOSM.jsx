@@ -2,13 +2,23 @@ import React, {useEffect, useRef} from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const COLORS = {yes:'#39a75a', no:'#e85d64', muted:'#bfc8d6'};
+const COLORS = {yes:'#39a75a', no:'#e85d64', recent:'#079c4a', attention:'#9bea6e', late:'#ffd734', none:'#f25d65', muted:'#bfc8d6'};
+
+// As cores representam a recência do ÚLTIMO registro municipal na Analytics.
+function situacaoMunicipio(row) {
+  if(!row?.cobertura||!row.ultima_transmissao)return 'none';
+  const registro=new Date(String(row.ultima_transmissao).slice(0,10)+'T00:00:00');
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const dias=Math.floor((hoje-registro)/86400000);
+  return dias<=7?'recent':dias<=30?'attention':'late';
+}
+const rotulosSituacao={recent:'Recepção recente (até 7 dias)',attention:'Atenção (8 a 30 dias)',late:'Sem recepção recente (mais de 30 dias)',none:'Sem recepção identificada'};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
 })[char]);
 
-function pinIcon(positive, isUnit=false) {
-  const color=positive ? COLORS.yes : COLORS.no;
+function pinIcon(positive, isUnit=false, municipalityStatus=null) {
+  const color=municipalityStatus ? COLORS[municipalityStatus] : (positive ? COLORS.yes : COLORS.no);
   return L.divIcon({
     className:'pec-marker'+(isUnit?' pec-marker-unit':''),
     iconSize:[isUnit?26:30,isUnit?36:42],
@@ -74,7 +84,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
           color:selectedMunicipio&&code===selectedMunicipio?'#17365b':'#fff',
           weight:selectedMunicipio&&code===selectedMunicipio?2.3:.8,
           opacity:1,
-          fillColor:!selected?COLORS.muted:(row?.cobertura?COLORS.yes:COLORS.no),
+          fillColor:!selected?COLORS.muted:COLORS[situacaoMunicipio(row)],
           fillOpacity: selected ? 0.62 : 0.28
         };
       },
@@ -83,7 +93,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
         const row=byCode.get(code);
         const name=feature.properties?.NM_MUN||row?.municipio||code;
         polygon.bindTooltip('<strong>'+esc(name)+'</strong><br>'+
-          (row?.cobertura?'Com recepção de dados identificada':'Sem recepção de dados identificada')+
+          rotulosSituacao[situacaoMunicipio(row)]+
           '<br>CNES distintos: '+(row?.cnes??0),{sticky:true});
         polygon.on('mouseover',()=>polygon.setStyle({weight:2,fillOpacity:.82}));
         polygon.on('mouseout',()=>polygons.resetStyle(polygon));
@@ -99,7 +109,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       const name=polygon.feature?.properties?.NM_MUN||row?.municipio||code;
       // Ponto representativo do município; NÃO corresponde à sede ou unidade.
       const point=polygon.getBounds().getCenter();
-      const marker=L.marker(point,{icon:pinIcon(Boolean(row?.cobertura))});
+      const marker=L.marker(point,{icon:pinIcon(Boolean(row?.cobertura),false,situacaoMunicipio(row))});
       marker.bindPopup('<strong>'+esc(name)+'</strong><br>'+
         (row?.cobertura?'Com recepção de dados identificada':'Sem recepção de dados identificada'));
       marker.on('click',()=>{
