@@ -13,6 +13,14 @@ function situacaoMunicipio(row) {
   return dias<=7?'recent':dias<=30?'attention':'late';
 }
 const rotulosSituacao={recent:'Recepção recente (até 7 dias)',attention:'Atenção (8 a 30 dias)',late:'Sem recepção recente (mais de 30 dias)',none:'Sem recepção identificada'};
+// Formata o timestamp recebido da API sem converter fuso horário:
+ // o banco já fornece o horário de referência e microssegundos não são exibidos.
+const formatarDataHoraBR = valor => {
+  if (!valor) return 'Não identificada';
+  const partes = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+  if (!partes) return 'Não identificada';
+  return partes[3]+'/'+partes[2]+'/'+partes[1]+' às '+partes[4]+':'+partes[5]+':'+partes[6];
+};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
 })[char]);
@@ -167,7 +175,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       marker.bindPopup('<strong>'+esc(unidade.estabelecimento)+'</strong><br>'+
         'CNES: '+esc(cnes)+'<br>'+status+
         '<br>Versão PEC: '+esc(unidade.versao_pec||'Não identificada')+
-        (unidade.ultima_transmissao?'<br>Última recepção de dados: '+esc(unidade.ultima_transmissao):''));
+        '<br>Última recepção de dados: '+esc(formatarDataHoraBR(unidade.ultima_transmissao)));
       // O mesmo pin alterna entre selecionar e desselecionar o CNES no mapa.
       marker.on('click',()=>alternarUnidadeRef.current?.(cnes));
       marker.addTo(layer);
