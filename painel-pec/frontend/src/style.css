@@ -1,0 +1,613 @@
+:root{font-family:Inter,Arial,sans-serif;color:#172b4c;background:#f8faff}*{box-sizing:border-box}body{margin:0;min-width:850px}.top{background:#294a76;color:white;padding:15px 28px;display:flex;justify-content:space-between;font-weight:600}.top small{opacity:.5}.top b{background:#587f91;border-radius:8px;padding:8px}main{max-width:1700px;margin:auto;padding:20px}.heading{display:flex;gap:18px;align-items:center}.heading h1{font-size:27px;margin:0 0 7px;color:#172844}.heading p{font-size:19px;margin:0;color:#42516b}.institution{margin-left:auto;font-weight:900;font-size:18px;color:#205991}.mark{font-size:40px;border:3px solid #2a86c7;border-radius:8px;padding:0 9px;color:#2877bc}.filters{border:1px solid #d9e4f1;background:white;border-radius:12px;margin:22px 0 16px;padding:14px 20px;display:flex;align-items:end;gap:22px}.filters label{font-weight:600;font-size:13px;display:flex;flex-direction:column;gap:6px;min-width:190px}.filters input,.filters select{border:1px solid #c8d4e2;border-radius:6px;padding:8px;background:white;min-width:210px}.filters button{border:1px solid #ccd5e2;background:white;padding:9px 14px;border-radius:7px;cursor:pointer}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.metrics article,.boards article{background:#fff;border:1px solid #cddcf2;border-radius:12px;padding:20px;box-shadow:0 1px 2px #cdd7e055}.metrics article:nth-child(2){background:#f4fcf6;border-color:#c5e5d0}.metrics article:nth-child(3){background:#fff8f8;border-color:#f4c8cc}.metrics article:nth-child(4){background:#f9f8ff;border-color:#ded6fa}.metrics h3{font-size:15px;margin:0 0 10px}.metrics strong{font-size:39px;display:block;color:#15345d}.metrics article:nth-child(3) strong{color:#ab202e}.metrics span{font-size:13px;color:#53657c}.progress{background:#d8d8e3;height:9px;border-radius:20px;margin:9px 0}.progress i{display:block;height:100%;background:#6856d9;border-radius:20px}.boards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.boards h2{font-size:18px;margin:0;color:#17365b}.boards .geo{display:flex;flex-direction:column;min-height:540px}.map-area{flex:1;min-height:420px}.map{width:100%;height:100%;min-height:420px}.geo footer{text-align:center;font-size:13px}.dot{display:inline-block;width:12px;height:12px;border-radius:3px}.green{background:#39a75a}.red{background:#e85d64}.right{display:grid;grid-template-rows:230px 1fr;gap:14px;min-height:540px}.right article{overflow:hidden}.donut{height:175px;width:100%}.table-wrap{overflow:auto;max-height:260px;margin-top:14px}table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;background:#f2f5fc}td,th{padding:9px;border-bottom:1px solid #dbe4ee}.pill{background:#ffe6e8;color:#a4232d;padding:5px 9px;border-radius:15px}.foot{text-align:right;font-size:12px;color:#60718a}.warning,.error{margin:12px 0;padding:12px;border-radius:7px;background:#fff4d8;color:#785a11;border:1px solid #eac963}.error{background:#ffebed;color:#a22534}@media(max-width:1100px){.metrics{grid-template-columns:repeat(2,1fr)}.boards{grid-template-columns:1fr}.institution{display:none}.filters{flex-wrap:wrap}}
+
+/* Filtros e cabeçalho institucional */
+.top{letter-spacing:.2px;align-items:center}
+.top span:first-child{font-size:16px}
+.filters{flex-wrap:wrap;gap:12px 18px}
+.filters label{min-width:160px}
+.filters input,.filters select{min-width:170px;max-width:250px;height:38px;color:#17365b}
+.filters button{height:38px;white-space:nowrap}
+.filter-note{background:#eef5ff;border:1px solid #bfd4f1;color:#284972;border-radius:8px;padding:11px 14px;margin:10px 0;font-size:13px}
+
+/* Situação do município selecionado */
+.pill-ok{background:#dff5e7;color:#17683a}
+.filters select[aria-label="Selecionar município"]{min-width:230px;max-width:300px}
+
+/* Pesquisa de município: 144 opções, sem dependências externas */
+.municipio-picker{position:relative;min-width:250px;max-width:310px}
+.filters .municipio-picker input{width:100%;min-width:250px;max-width:310px;padding-right:34px}
+.municipio-clear{position:absolute;right:5px;top:4px;border:0!important;background:transparent!important;min-width:28px;padding:0 7px!important;font-size:21px;line-height:28px;color:#62738d;cursor:pointer;height:30px!important}
+.municipio-options{position:absolute;z-index:50;top:calc(100% + 4px);left:0;right:0;max-height:270px;overflow-y:auto;background:#fff;border:1px solid #c8d4e2;border-radius:7px;box-shadow:0 8px 20px #152f5240}
+.municipio-options button{display:block;width:100%;max-width:none;min-width:0;height:auto!important;text-align:left;border:0!important;border-radius:0!important;background:#fff!important;padding:9px 12px!important;font-size:14px;color:#172b4c;cursor:pointer;white-space:normal}
+.municipio-options button:hover,.municipio-options button[aria-selected=true]{background:#e9f1ff!important}
+.municipio-empty{padding:12px;color:#63758d;font-size:13px}
+
+/* Mapa cartográfico opcional (OpenStreetMap + polígonos municipais) */
+.map-header{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.map-switch{display:flex;gap:4px;padding:3px;background:#edf2f9;border:1px solid #cddcf2;border-radius:8px}
+.map-switch button{border:0;background:transparent;border-radius:5px;padding:7px 11px;color:#375475;cursor:pointer;font-size:12px;font-weight:600}
+.map-switch button.active{background:#fff;color:#174477;box-shadow:0 1px 5px #b7c4d2}
+.osm-map{width:100%;height:100%;min-height:420px;border-radius:8px;background:#e5edf2;z-index:0}
+.osm-map .leaflet-container{font-family:Inter,Arial,sans-serif}
+.osm-map .leaflet-control-attribution{font-size:10px}
+
+/* Pins estilo localização: município e estabelecimento de saúde */
+.pec-marker{background:transparent;border:none;cursor:pointer}
+.pec-marker svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 2px #1d2f4266)}
+.pec-marker-unit{z-index:1}
+.filters label:has(select[aria-label="Selecionar unidade de saúde"]){min-width:250px}
+.filters select[aria-label="Selecionar unidade de saúde"]{min-width:260px;max-width:340px;text-overflow:ellipsis}
+
+/* Busca estadual de estabelecimentos e vínculo bidirecional com município */
+.unidade-picker{min-width:275px;max-width:360px}
+.filters .unidade-picker input{min-width:275px;max-width:360px}
+.unidade-picker .municipio-options small{display:block;font-size:11px;color:#607a9b;margin-top:3px}
+
+/* Atualização visual: indicadores estaduais e recência de recebimento */
+.metrics article{display:flex;gap:14px;align-items:center;min-width:0;padding:19px 15px}
+.metrics article>div{flex:1;min-width:0}
+.metrics h3{font-size:14px;font-weight:750;margin-bottom:5px}
+.metrics strong{font-size:36px;line-height:1.12}
+.metrics .metric-icon{display:grid;place-items:center;flex:0 0 50px;height:50px;border-radius:13px;color:#fff;font-size:31px;font-weight:800;box-shadow:0 5px 13px #1c477522}
+.metrics .metric-total{background:linear-gradient(140deg,#fff,#eaf3ff);border-color:#bad8ff}
+.metric-total .metric-icon{background:linear-gradient(135deg,#45b2ff,#0876ed)}
+.metrics .metric-mapped{background:linear-gradient(140deg,#fff,#ecfaf0);border-color:#b9e7c9}
+.metric-mapped .metric-icon{background:linear-gradient(135deg,#36cc70,#079641)}
+.metrics .metric-missing{background:linear-gradient(140deg,#fff,#fff0f2);border-color:#ffc1ca}
+.metric-missing .metric-icon{background:linear-gradient(135deg,#ff7284,#d82b49)}
+.metrics .metric-coverage{background:linear-gradient(140deg,#fff,#f1edff);border-color:#d4c4ff}
+.metric-coverage .metric-icon{background:linear-gradient(135deg,#9d75ff,#6735da)}
+.metric-coverage .progress{margin:8px 0 4px}
+.metric-coverage .progress i{background:linear-gradient(90deg,#9664ff,#6339db)}
+.recency-panel{min-height:265px}
+.recency-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:17px}
+.recency-card{display:flex;gap:10px;align-items:center;padding:13px;border:1px solid;border-radius:11px;min-width:0}
+.recency-icon{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:10px;font-size:25px;font-weight:850;background:#fff}
+.recency-label{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.recency-label strong{font-size:13px;line-height:1.3}
+.recency-label small,.recency-count small{font-size:12px}
+.recency-count{border-left:1px solid currentColor;padding-left:12px;display:flex;flex-direction:column;align-items:flex-end;min-width:66px}
+.recency-count strong{font-size:27px;line-height:1.1}
+.recency-recent{background:#effbf2;border-color:#a5e0b5;color:#167739}
+.recency-attention{background:#fff9e9;border-color:#f6d27c;color:#946000}
+.recency-late{background:#fff1ed;border-color:#ffb69b;color:#b84123}
+.recency-none{background:#f3f5f8;border-color:#c7ced9;color:#4d586c}
+.filters .period-filter{min-width:205px}
+.filters .period-filter select{min-width:205px;background:#fff}
+.right{grid-template-rows:auto minmax(280px,1fr)}
+@media(max-width:1150px){.metrics article{padding:14px}.metrics .metric-icon{flex-basis:43px;height:43px}.metrics h3{font-size:12px}.metrics strong{font-size:31px}}
+@media(max-width:600px){.recency-grid{grid-template-columns:1fr}}
+
+/* Revisao de acessibilidade visual: tipografia, alinhamento e icones vetoriais */
+:root{font-size:16px}
+body{font-size:16px}
+.top{font-size:17px;padding:17px 28px}
+.top span:first-child{font-size:18px}
+.heading h1{font-size:31px}
+.heading p{font-size:20px}
+.filters label{font-size:15px;line-height:1.4}
+.filters input,.filters select,.filters button{font-size:15px;height:43px}
+.filters{gap:15px 19px}
+.filter-note,.warning,.error{font-size:15px;line-height:1.5}
+.boards h2{font-size:21px;line-height:1.32}
+.metrics article{display:flex;align-items:center;gap:15px;padding:20px 17px;min-height:132px}
+.metrics article>div{flex:1;min-width:0}
+.metrics h3{font-size:16px;line-height:1.3}
+.metrics strong{font-size:38px;line-height:1.1}
+.metrics span:not(.metric-icon){font-size:14px;line-height:1.4}
+.metrics .metric-icon,.recency-icon,.section-icon{display:flex;align-items:center;justify-content:center;line-height:0;padding:0;box-sizing:border-box}
+.metrics .metric-icon{width:56px;height:56px;flex:0 0 56px;border-radius:14px;overflow:hidden}
+.metrics .metric-icon svg,.recency-icon svg,.section-icon svg{display:block;flex:none;width:27px;height:27px;overflow:visible}
+.recency-icon{width:46px;height:46px;flex:0 0 46px;border-radius:12px;box-shadow:0 2px 8px #172b4c13}
+.recency-label strong{font-size:15px;line-height:1.35}
+.recency-label small,.recency-count small{font-size:13px}
+.recency-count strong{font-size:29px}
+.recency-card{gap:12px;padding:15px 13px}
+.section-heading{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-width:0}
+.section-icon{width:42px;height:42px;flex:0 0 42px;border-radius:12px;color:white;box-shadow:0 3px 10px #172b4c1b}
+.section-icon-map{background:linear-gradient(135deg,#39a8ff,#116cdb)}
+.section-icon-recency{background:linear-gradient(135deg,#8268fa,#553bd2)}
+.section-icon-alert{background:linear-gradient(135deg,#ff7e88,#d7354e)}
+.section-icon svg{width:25px;height:25px}
+.recency-grid{margin-top:5px}
+.table-wrap{max-height:340px;margin-top:12px;overflow:auto}
+.table-wrap table{min-width:680px;font-size:14px}
+.table-wrap th{font-size:14px;line-height:1.3;white-space:normal;position:sticky;top:0;z-index:1}
+.table-wrap td{font-size:14px;line-height:1.5;vertical-align:middle}
+.table-wrap th:nth-child(4),.table-wrap th:nth-child(5){min-width:110px}
+.pill{display:inline-flex;align-items:center;white-space:nowrap;font-weight:650}
+.no-data{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:5px 9px;background:#ffe6e8;border:1px solid #f5bec5;border-radius:999px;color:#a4232d;font-size:13px;font-weight:750}
+.geo footer,.foot{font-size:14px}
+.municipio-options button,.municipio-empty{font-size:15px}
+@media(max-width:1150px){.metrics h3{font-size:15px}.metrics strong{font-size:34px}.metrics .metric-icon{flex-basis:48px;width:48px;height:48px}}
+
+/* Ícones compactos dos três títulos de seção e fonte CNES no rodapé */
+.boards .section-icon{width:32px;height:32px;flex:0 0 32px;border-radius:9px}
+.boards .section-icon svg{width:19px;height:19px}
+.boards .section-heading{gap:9px}
+.foot a{color:#1767bd;text-decoration:underline;text-underline-offset:3px;font-weight:650}
+.foot a:hover{color:#0d457f}
+.foot a:focus-visible{outline:2px solid #1767bd;outline-offset:3px}
+
+/* Legibilidade dos filtros e separação entre cabeçalho territorial e mapa */
+.filters label{font-size:16px;line-height:1.45}
+.filters input,.filters select,.filters button{font-size:16px;line-height:1.35;min-height:45px}
+.filters .municipio-picker input,.filters .unidade-picker input{font-size:16px;min-height:45px}
+.municipio-options button,.municipio-empty{font-size:16px}
+.boards .geo .map-header{flex:0 0 auto;align-items:center;padding-bottom:18px;min-height:54px}
+.boards .geo .map-header .section-heading{margin:0;align-items:center;line-height:1.35}
+.boards .geo .map-area{min-height:420px;position:relative}
+
+/* Acoes de filtro compactas: tooltips nativos via title e foco por teclado */
+.filter-actions{display:flex;align-items:center;gap:10px;align-self:flex-end}
+.filters .filter-actions .filter-icon-button{width:45px;height:45px;min-width:45px;min-height:45px;padding:0;display:inline-flex;align-items:center;justify-content:center;line-height:0;border:1px solid #bfd0e3;border-radius:9px;background:#fff;color:#1c5794;transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease}
+.filters .filter-actions .filter-icon-button svg{display:block;width:22px;height:22px;flex:none}
+.filters .filter-actions .filter-icon-button:hover{background:#eaf3ff;border-color:#7db3ee;box-shadow:0 2px 6px #1b49741a}
+.filters .filter-actions .filter-icon-button:focus-visible{outline:3px solid #2679cb;outline-offset:2px}
+
+/* Alerta de ausencia de recebimento: neon vermelho discreto e acessivel */
+.municipality-table-panel .pill-no-receipt{background:#ffe9ed;border:1px solid #ee8395;color:#a21731;font-weight:750;box-shadow:0 0 0 rgba(226,40,70,0);animation:receipt-alert-pulse 2.8s ease-in-out infinite}
+@keyframes receipt-alert-pulse{
+  0%,100%{background:#ffe9ed;border-color:#ee8395;box-shadow:0 0 0 0 rgba(226,40,70,0)}
+  50%{background:#ffdce4;border-color:#e43b5b;box-shadow:0 0 8px 2px rgba(226,40,70,.35)}
+}
+@media(prefers-reduced-motion:reduce){.municipality-table-panel .pill-no-receipt{animation:none;box-shadow:0 0 0 1px rgba(226,40,70,.25)}}
+
+
+/* Layout responsivo: preserva desktop e evita rolagem horizontal da pagina */
+html{width:100%;max-width:100%;overflow-x:clip}
+body{min-width:0;width:100%;max-width:100%}
+#root{min-width:0;width:100%}
+main,.heading,.boards,.boards>*,.right,.right>*,.metrics,.metrics>*,.filters,.filters>*{min-width:0}
+.map-area,.osm-map{width:100%;min-width:0}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.table-wrap table{width:max(100%,680px)}
+.leaflet-popup-content{overflow-wrap:anywhere}
+
+/* Tablets: filtros em grade, indicadores em duas colunas, mapa acima dos detalhes */
+@media (max-width:1100px){
+  .top{gap:12px;flex-wrap:wrap}
+  .heading{align-items:flex-start}
+  .filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}
+  .filters label,.filters .period-filter{width:100%;max-width:none;min-width:0}
+  .filters input,.filters select,.filters .period-filter select{width:100%;max-width:none;min-width:0}
+  .municipio-picker,.unidade-picker{width:100%;max-width:none;min-width:0}
+  .filters .municipio-picker input,.filters .unidade-picker input{width:100%;max-width:none;min-width:0}
+  .filter-actions{justify-content:flex-end;align-self:end}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .boards{grid-template-columns:minmax(0,1fr)}
+  .right{min-width:0}
+}
+
+/* Celulares: leitura em coluna unica, controles de toque e mapa adaptado */
+@media (max-width:640px){
+  .top{padding:12px 16px;flex-direction:column;align-items:flex-start;gap:5px;font-size:13px;line-height:1.4}
+  .top span:first-child{font-size:16px}
+  .top span:last-child{font-size:13px;overflow-wrap:anywhere}
+  main{padding:16px 12px 26px}
+  .heading{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;align-items:start}
+  .heading .mark{font-size:25px;line-height:1.2;padding:3px 5px;border-width:2px}
+  .heading h1{font-size:clamp(20px,5.5vw,26px);line-height:1.2;overflow-wrap:anywhere}
+  .heading p{font-size:14px;line-height:1.45;margin-top:5px}
+  .heading .institution{display:none}
+  .filters{grid-template-columns:minmax(0,1fr);padding:14px;margin:16px 0;gap:12px;border-radius:12px}
+  .filters label,.filters .period-filter{font-size:15px;gap:5px}
+  .filters input,.filters select,.filters button{font-size:16px;min-height:46px}
+  .filters .municipio-picker input,.filters .unidade-picker input{font-size:16px;min-height:46px}
+  .municipio-options{max-height:min(45vh,290px)}
+  .filters .filter-actions{justify-content:flex-end;gap:12px}
+  .filters .filter-actions .filter-icon-button{width:48px;height:48px;min-width:48px;min-height:48px}
+  .filter-note,.warning,.error{font-size:14px;overflow-wrap:anywhere}
+  .metrics{grid-template-columns:minmax(0,1fr);gap:10px}
+  .metrics article{min-height:112px;padding:16px;gap:14px}
+  .metrics h3{font-size:15px}
+  .metrics strong{font-size:34px}
+  .metrics .metric-icon{width:50px;height:50px;flex:0 0 50px}
+  .boards{gap:12px;margin-top:14px}
+  .boards article{padding:14px}
+  .boards h2{font-size:17px;line-height:1.3}
+  .boards .section-heading{gap:9px}
+  .boards .geo{min-height:0}
+  .boards .geo .map-header{padding-bottom:12px;min-height:0}
+  .boards .geo .map-area{height:340px;min-height:340px;flex:0 0 auto}
+  .osm-map{height:340px;min-height:340px}
+  .geo footer{font-size:12px;line-height:1.6;margin-top:9px}
+  .right{display:grid;grid-template-rows:auto auto;gap:12px;min-height:0}
+  .recency-panel{min-height:0}
+  .recency-grid{grid-template-columns:minmax(0,1fr);gap:9px}
+  .recency-card{padding:11px;gap:10px}
+  .recency-label strong{font-size:14px}
+  .recency-count strong{font-size:26px}
+  .table-wrap{max-height:360px;margin-top:8px}
+  .table-wrap table{min-width:690px}
+  .table-wrap th,.table-wrap td{font-size:13px;padding:9px 10px}
+  .foot{text-align:left;font-size:12px;line-height:1.65;margin:18px 2px 0;overflow-wrap:anywhere}
+  .leaflet-popup-content{max-width:min(65vw,240px);font-size:13px}
+  .leaflet-control-attribution{max-width:75vw}
+}
+
+/* Telas muito estreitas: preservar espaco do mapa e legibilidade */
+@media (max-width:360px){
+  main{padding-left:10px;padding-right:10px}
+  .boards article{padding:11px}
+  .boards .geo .map-area,.osm-map{height:300px;min-height:300px}
+  .metrics article{gap:10px}
+}
+
+/* Seleção visual de período personalizado: dois calendários, sem entrada manual. */
+.custom-period{margin:-5px 0 17px;padding:17px 19px;background:#fff;border:1px solid #cddcf2;border-radius:12px;box-shadow:0 1px 3px #122b4720;max-width:760px}
+.custom-period-intro{display:flex;justify-content:space-between;align-items:center;gap:8px 20px;flex-wrap:wrap;margin-bottom:14px;color:#203d62}
+.custom-period-intro strong{font-size:16px}
+.custom-period-intro span{font-size:13px;color:#61728a}
+.custom-period-calendars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}
+.calendar-month{min-width:0;padding:13px;border-radius:11px;background:#f8fbff;border:1px solid #dce7f3}
+.calendar-month-heading{display:flex;justify-content:space-between;gap:9px;align-items:center;flex-wrap:wrap;line-height:1.3}
+.calendar-month-heading strong{font-size:15px;color:#13365c}
+.calendar-month-heading small{font-size:13px;font-weight:700;color:#3672af}
+.calendar-month-nav{display:flex;align-items:center;justify-content:space-between;gap:7px;margin:10px 0 9px}
+.calendar-month-nav span{font-size:14px;font-weight:650;text-transform:capitalize;text-align:center;color:#234465}
+.calendar-month-nav button{width:34px;height:34px;flex:0 0 34px;padding:0;background:#fff;color:#205b95;border:1px solid #cbd9e9;border-radius:8px;font-size:25px;line-height:1;cursor:pointer}
+.calendar-month-nav button:hover{background:#e8f2ff}
+.calendar-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;align-items:center}
+.calendar-weekday{font-weight:750;font-size:12px;text-align:center;color:#647890;padding:6px 0}
+.calendar-days button{width:100%;height:35px;min-width:0;border:1px solid transparent;border-radius:7px;background:transparent;color:#223d5e;font-size:13px;font-weight:600;padding:0;cursor:pointer}
+.calendar-days button:hover:not(:disabled){background:#dbeeff;border-color:#93c3f5;color:#124a80}
+.calendar-days button.calendar-day-selected{color:white;background:#1377cd;border-color:#1377cd}
+.calendar-days button:disabled{cursor:not-allowed;opacity:.3}
+.calendar-days button:focus-visible,.calendar-month-nav button:focus-visible{outline:3px solid #1a74c3;outline-offset:2px}
+.custom-period-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px 16px;margin-top:13px;font-size:13px;color:#61728a}
+.custom-period-footer strong{color:#17365b}
+@media(max-width:640px){
+  .custom-period{margin:-5px 0 15px;max-width:none;padding:13px}
+  .custom-period-calendars{grid-template-columns:minmax(0,1fr);gap:11px}
+  .calendar-month{padding:12px}
+  .calendar-days button{height:39px;font-size:14px}
+}
+
+/* Pop-up do período personalizado: sobrepõe o conteúdo, não altera o fluxo da página. */
+.filters{position:relative;z-index:20}
+.filters .period-control{position:relative;min-width:0;max-width:100%;z-index:21}
+.filters .period-control .period-filter{display:flex;flex-direction:column;gap:6px;min-width:0;width:100%}
+.filters .period-control .period-filter select{width:100%;max-width:none;min-width:0}
+.calendar-popover{
+  position:absolute;top:calc(100% + 12px);right:0;
+  width:min(760px,calc(100vw - 32px));max-width:none;
+  z-index:100;padding:0;visibility:hidden;opacity:0;
+  pointer-events:none;transform:translateY(-8px) scale(.985);
+  transform-origin:top right;
+  transition:opacity .2s ease,transform .2s ease,visibility .2s;
+}
+.calendar-popover-open{visibility:visible;opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+.calendar-popover .custom-period{margin:0;width:100%;max-width:none;box-shadow:0 18px 42px rgba(23,48,82,.22);border-color:#b8cfe9}
+.calendar-popover .custom-period-footer{justify-content:space-between}
+.calendar-popover .custom-period-footer>div{display:flex;flex-direction:column;gap:4px}
+.calendar-popover .custom-period-footer small{font-size:12px;color:#63758d}
+.calendar-done{border:0;border-radius:8px;padding:10px 18px;min-height:40px;background:#196eb6;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.calendar-done:hover{background:#125791}
+.calendar-done:focus-visible{outline:3px solid #2d8ddb;outline-offset:3px}
+@media(max-width:1100px){
+  .filters .period-control{width:100%}
+}
+@media(max-width:640px){
+  .calendar-popover{width:min(440px,calc(100vw - 40px));right:0}
+  .calendar-popover .custom-period{padding:12px;max-height:min(77vh,690px);overflow:auto;overscroll-behavior:contain}
+}
+@media(prefers-reduced-motion:reduce){
+  .calendar-popover{transition:none;transform:none}
+}
+
+/* Intervalo selecionado: extremos fortes e dias intermediários em azul claro. */
+/* Seletor específico de .filters evita que regras genéricas de botão ocultem as cores. */
+.filters .calendar-days button.calendar-day-in-range{
+  background:#d7eaff;color:#124d88;border-color:#c5dfff;border-radius:5px;
+}
+.filters .calendar-days button.calendar-day-selected{
+  background:#1478cc;color:#fff;border-color:#1478cc;border-radius:7px;
+  box-shadow:0 2px 5px rgba(20,100,180,.18);
+}
+.filters .calendar-days button.calendar-day-in-range:hover:not(:disabled){
+  background:#bedcff;border-color:#98c4f5;
+}
+.filters .calendar-days button.calendar-day-selected:hover:not(:disabled){
+  background:#075fae;border-color:#075fae;color:#fff;
+}
+/* Botão Concluir: especificidade superior às regras globais de .filters button. */
+.filters .calendar-done{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:auto;min-width:116px;height:44px;min-height:44px;padding:0 20px;
+  border:1px solid #1165ac;border-radius:9px;
+  background:#176eb8;color:#fff;font-size:15px;font-weight:750;
+  line-height:1.2;white-space:nowrap;box-shadow:0 3px 8px rgba(18,83,146,.16);
+  cursor:pointer;
+}
+.filters .calendar-done:hover{
+  background:#0e5796;color:#fff;border-color:#0e5796;
+}
+.filters .calendar-done:focus-visible{outline:3px solid #65aff1;outline-offset:3px}
+@media(max-width:640px){
+  .calendar-popover .custom-period-footer{align-items:stretch}
+  .filters .calendar-done{width:100%;min-width:0}
+}
+
+/* Range picker no estilo Metabase: janela sincronizada de dois meses.
+   A seleção é apenas visual até clicar em Aplicar filtro. */
+.calendar-popover .custom-period{padding:16px 18px}
+.calendar-mode{display:flex;align-items:center;border-bottom:1px solid #dbe5f0;margin:-5px 0 14px;gap:15px}
+.calendar-mode-active{display:inline-flex;padding:7px 15px 10px;border-bottom:2px solid #1478cc;color:#125b9a;font-size:15px;font-weight:750}
+.calendar-range-summary{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:10px;margin-bottom:13px}
+.calendar-range-summary>div{min-width:0;min-height:58px;padding:8px 11px;border:1px solid #d0dce9;border-radius:8px;background:white;display:flex;flex-direction:column;gap:3px}
+.calendar-range-summary small{font-size:11px;font-weight:750;color:#59708c}
+.calendar-range-summary strong{font-size:14px;font-weight:600;color:#17365b;line-height:1.3;overflow-wrap:anywhere}
+.calendar-range-summary>span{text-align:center;color:#75869a}
+.calendar-range-navigation{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:6px}
+.calendar-range-navigation>span{font-size:12px;line-height:1.3;color:#66819a;text-align:center}
+.filters .calendar-range-navigation button{display:grid;place-items:center;flex:0 0 34px;width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border:1px solid #c8d8e8;border-radius:7px;background:#fff;color:#155e9d;font-size:25px;line-height:1;cursor:pointer}
+.filters .calendar-range-navigation button:hover{background:#edf5ff;border-color:#89b7e3}
+.calendar-popover .custom-period-calendars{gap:12px}
+.calendar-popover .calendar-month{border:0;border-radius:7px;padding:9px 6px;background:#fff}
+.calendar-month-title{min-height:30px;text-align:center;font-size:15px;font-weight:750;color:#263e58;text-transform:capitalize}
+.calendar-popover .calendar-days{gap:2px}
+.filters .calendar-days button{border-radius:3px;min-height:35px}
+.filters .calendar-days button.calendar-day-in-range{background:#ecf4fd;color:#1678cb;border-color:#ecf4fd;border-radius:2px}
+.filters .calendar-days button.calendar-day-selected{background:#3e96da;color:#fff;border-color:#3e96da;border-radius:3px;box-shadow:none}
+.calendar-popover .custom-period-footer{border-top:1px solid #e0e8f1;padding-top:13px;gap:12px}
+.calendar-actions{display:flex;align-items:center;gap:9px}
+.filters .calendar-cancel{min-height:42px;height:42px;padding:0 14px;border:1px solid #c8d7e8;border-radius:8px;background:#fff;color:#315a82;font-size:14px;font-weight:700;cursor:pointer}
+.filters .calendar-cancel:hover{background:#f0f5fa}
+.filters .calendar-done{width:auto;min-width:140px;min-height:42px;height:42px;padding:0 17px;border:1px solid #176eb8;background:#176eb8;color:#fff}
+.filters .calendar-done:disabled{background:#c5d1df;border-color:#c5d1df;color:#52667d;box-shadow:none;cursor:not-allowed;opacity:1}
+.filters .calendar-done:hover:not(:disabled){background:#105b9d;color:#fff;border-color:#105b9d}
+@media(max-width:640px){
+ .calendar-popover .custom-period{padding:12px}
+ .calendar-range-summary{gap:5px;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr)}
+ .calendar-range-summary>div{padding:7px;min-height:63px}
+ .calendar-range-summary strong{font-size:12px}
+ .calendar-popover .custom-period-calendars{gap:8px}
+ .calendar-popover .calendar-month{padding:7px 2px}
+ .calendar-popover .custom-period-footer{align-items:stretch}
+ .calendar-actions{width:100%}
+ .filters .calendar-cancel,.filters .calendar-done{width:50%;min-width:0}
+}
+
+/* Atualização manual: rotação somente durante a consulta e confirmação de sucesso. */
+.filters .filter-actions .refresh-button{transition:background-color .2s,border-color .2s,box-shadow .2s,transform .2s}
+.filters .filter-actions .refresh-button:not(:disabled):hover{transform:translateY(-1px)}
+.filters .filter-actions .refresh-button:disabled{opacity:1;cursor:progress;border-color:#88b6e4;background:#eaf3ff;color:#1767b7}
+.refresh-icon{display:inline-flex;align-items:center;justify-content:center;line-height:0}
+.refresh-button-loading .refresh-icon{animation:refresh-spin .9s linear infinite}
+@keyframes refresh-spin{to{transform:rotate(360deg)}}
+.refresh-success{display:flex;align-items:center;gap:9px;max-width:max-content;margin:-5px 0 14px;padding:9px 13px;border:1px solid #a9dac1;border-radius:9px;background:#ecfaf2;color:#16673f;font-size:14px;font-weight:650;box-shadow:0 3px 10px rgba(32,119,72,.08);animation:refresh-notice-in .23s ease-out}
+.refresh-success svg{flex:0 0 auto}
+@keyframes refresh-notice-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* O intervalo aplicado permanece visível no filtro após fechar o calendário. */
+.filters .period-control .period-selected-summary{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:5px 9px;border:1px solid #b9d8f7;border-radius:7px;background:#eaf4ff;color:#175e9c;font-size:12px;line-height:1.35;font-weight:750;white-space:nowrap;max-width:100%}
+.filters .period-control .period-selected-summary svg{flex:0 0 auto}
+@media(max-width:640px){
+ .filters .period-control .period-selected-summary{font-size:12px;white-space:normal}
+ .refresh-success{max-width:100%;margin:0 0 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .refresh-button-loading .refresh-icon,.refresh-success{animation:none}
+}
+
+/* A data aplicada ocupa o próprio seletor, sem badge externo nem linha adicional. */
+.filters .period-control{min-width:264px}
+.filters .period-control .period-filter select{width:100%;min-width:0;font-size:14px;padding-right:24px;text-overflow:ellipsis}
+@media(max-width:1100px){.filters .period-control{min-width:0}}
+
+/* Notificação flutuante: não participa do layout e esmaece antes de sair. */
+.refresh-success{
+ position:fixed;right:22px;bottom:22px;top:auto;left:auto;z-index:10000;
+ max-width:min(390px,calc(100vw - 28px));margin:0;padding:13px 17px;
+ border-radius:12px;box-shadow:0 12px 30px rgba(15,78,49,.20);
+ pointer-events:none;animation:refresh-toast-life 5s ease-in-out both;
+}
+@keyframes refresh-toast-life{
+ 0%{opacity:0;transform:translateY(12px)}
+ 8%,75%{opacity:1;transform:translateY(0)}
+ 100%{opacity:0;transform:translateY(10px)}
+}
+@media(max-width:640px){.refresh-success{right:14px;bottom:14px;left:14px;max-width:none;width:auto;margin:0}}
+@media(prefers-reduced-motion:reduce){.refresh-success{animation:refresh-toast-fade 5s linear both}}
+@keyframes refresh-toast-fade{0%{opacity:1}75%{opacity:1}100%{opacity:0}}
+
+/* Identidade do cabeçalho: ícone de monitoramento substitui a cruz anterior. */
+.heading .mark{display:flex;align-items:center;justify-content:center;width:72px;height:72px;flex:0 0 72px;padding:0;line-height:0}
+.heading .mark svg{display:block;width:38px;height:38px}
+@media(max-width:640px){.heading .mark{width:40px;height:40px;min-width:0;flex-basis:auto;padding:0}.heading .mark svg{width:25px;height:25px}}
+
+/* UX 2.0: identidade institucional aprovada, sem logotipo do Governo do Pará.
+   As faixas azuis padronizam títulos do resumo, mapa, gráficos e tabelas. */
+.ux-top{width:100%;min-height:94px;background:linear-gradient(125deg,#0879c9,#07549f 73%,#03457e);color:white;padding:13px clamp(16px,2.3vw,38px);display:flex;align-items:center;justify-content:space-between;gap:22px}
+.ux-brand{display:flex;align-items:center;gap:20px;min-width:0}
+.ux-logo{height:65px;width:65px;flex:0 0 65px;display:grid;place-items:center;border:3px solid #e9f5ff;border-radius:10px;color:#fff;background:#ffffff19}
+.ux-brand h1{color:white;margin:0 0 6px;font-size:clamp(22px,2.25vw,36px);font-weight:800;line-height:1.14;letter-spacing:-.5px}
+.ux-brand p{color:#e8f4ff;margin:0;font-size:clamp(14px,1.45vw,21px);line-height:1.3}
+.ux-sespa{text-align:right;display:flex;flex-direction:column;gap:1px;flex:0 0 190px}
+.ux-sespa strong{font-size:27px;color:#fff;line-height:1.1}
+.ux-sespa small{font-size:13px;line-height:1.25;color:#eef6ff}
+.ux-main{max-width:none;padding:13px clamp(12px,1vw,22px) 22px}
+.ux-main .filters{margin:0 0 16px;border-radius:13px;box-shadow:0 3px 12px #1a5a9a0d;gap:10px 15px;align-items:end}
+.ux-main .filters label{font-weight:750;color:#162f56}
+.ux-main .filters .filter-actions{display:flex;align-items:center;gap:8px}
+.ux-main .filter-actions .refresh-button{width:52px;height:43px;min-width:52px;background:#076bb9;color:#fff;border-color:#0b65ae;border-radius:9px}
+.ux-main .filter-actions .refresh-button:hover:not(:disabled){background:#005398;color:#fff}
+.ux-main .filter-actions .refresh-button:disabled{color:#0960a6;background:#d3e9fa}
+.ux-main .filter-actions .ux-export,.ux-main .filter-actions .ux-help-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;height:43px;min-height:43px;border:1px solid #abc9e9;border-radius:9px;background:#fff;color:#0e5e9f;font-weight:750;font-size:14px;white-space:nowrap}
+.ux-main .filter-actions .ux-export:hover,.ux-main .filter-actions .ux-help-btn:hover{background:#edf6ff;border-color:#5b9cdd}
+.ux-main .metrics{gap:12px;margin:0 0 20px}
+.ux-main .metrics article{min-height:126px;position:relative;padding:15px 17px;border-radius:14px;gap:14px;box-shadow:0 3px 10px #184d8410}
+.ux-main .metrics .metric-icon{width:67px;height:67px;flex:0 0 67px;border-radius:50%;box-shadow:none;background:#e0f0ff;color:#0975c7}
+.ux-main .metrics .metric-mapped .metric-icon{background:#d9fae4;color:#068d3d}
+.ux-main .metrics .metric-missing .metric-icon{background:#ffe2e5;color:#df3445}
+.ux-main .metrics .metric-coverage .metric-icon{background:#eee4ff;color:#7641e6}
+.ux-main .metrics strong{font-size:clamp(29px,3vw,42px)}
+.ux-main .metrics .metric-mapped strong{color:#11612f}
+.ux-main .metrics h3{font-size:17px;margin:0 30px 6px 0}
+.ux-kpi-help{position:absolute;right:14px;top:13px;border:0;background:transparent;color:#1c80d2;padding:4px;display:grid;place-items:center;cursor:help}
+.ux-kpi-help:hover{color:#004c98}
+.ux-main .ux-dashboard-main{display:grid;grid-template-columns:minmax(260px,.95fr) minmax(360px,1.38fr) minmax(310px,1.04fr);gap:14px;align-items:stretch}
+.ux-card{border:1px solid #cddff0;border-radius:13px;background:#fff;min-width:0;overflow:hidden;box-shadow:0 2px 8px #173d6711}
+.ux-section-bar{background:linear-gradient(90deg,#0866ba,#1786d5);color:#fff;min-height:43px;display:flex;align-items:center;gap:9px;padding:9px 13px}
+.ux-section-bar h2{margin:0;font-size:17px;font-weight:800;line-height:1.22;color:white;flex:1}
+.ux-section-bar-icon{display:grid;place-items:center;flex:0 0 24px}
+.ux-info-icon{background:none;border:0;color:#fff;cursor:help;display:grid;place-items:center;padding:3px;opacity:.95}
+.ux-card-body{padding:16px 15px}
+.ux-municipality-name{font-size:23px;color:#18375d;margin:0 0 2px}
+.ux-ibge{font-size:15px;color:#34516d;margin:0 0 13px}
+.ux-local-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ux-local-metric{border:1px solid #d7e6f7;background:#f2f8ff;border-radius:10px;display:flex;align-items:center;gap:11px;padding:13px 9px;min-width:0;color:#126bb8}
+.ux-local-metric>svg{flex:0 0 24px}
+.ux-local-metric span{font-size:12px;font-weight:750;color:#19395e;min-width:0}
+.ux-local-metric strong{display:block;font-size:28px;line-height:1.15;margin-top:3px;color:#123f73}
+.ux-unit-green{background:#ebfbf2;border-color:#ccefdc;color:#169447}.ux-unit-green strong{color:#137b36}
+.ux-unit-red{background:#fff1f2;border-color:#ffe0e1;color:#d72841}.ux-unit-red strong{color:#b52639}
+.ux-unit-violet{background:#f5f0ff;border-color:#e1d7fa;color:#8152dc}.ux-unit-violet strong{color:#6840bd}
+.ux-local-last{display:flex;align-items:center;gap:11px;border:1px solid #dce6f0;border-radius:9px;margin:13px 0 12px;padding:12px;color:#146db9}
+.ux-local-last span{font-size:13px;color:#203c5e;font-weight:600}
+.ux-local-last strong{display:block;font-size:20px;color:#162f55;margin-top:4px}
+.ux-unit-action{width:100%;border:1px solid #4b99e2;border-radius:8px;background:#fff;color:#146db9;min-height:43px;font-weight:750;cursor:pointer}
+.ux-unit-action:hover{background:#eff7ff}
+.ux-local-footnote{font-size:11px;line-height:1.5;color:#667e97;margin:12px 0 0}
+.ux-select-municipality{display:flex;flex-direction:column;gap:13px;align-items:center;text-align:center;justify-content:center;min-height:395px;color:#4280b5}
+.ux-select-municipality strong{font-size:18px;color:#214c7b}
+.ux-select-municipality p{font-size:14px;line-height:1.6;color:#456381;margin:0}
+.ux-select-municipality span{font-size:12px;color:#6e8296}
+.ux-map{display:flex;flex-direction:column;min-height:475px}
+.ux-map-area{flex:1;min-height:390px;position:relative;padding:8px}
+.ux-map-area .osm-map{min-height:390px;border-radius:5px}
+.ux-map-legend{display:flex;justify-content:center;gap:18px;padding:10px 12px 14px;font-size:12px;color:#37516d;flex-wrap:wrap}
+.ux-map-legend>span{display:flex;align-items:center;gap:5px}
+.ux-dashboard-side{display:grid;grid-template-rows:minmax(225px,1.1fr) minmax(210px,1fr);gap:13px;min-width:0}
+.ux-dashboard-side .ux-card-body{padding:14px}
+.ux-version-list{display:flex;flex-direction:column;gap:12px}
+.ux-version-row{display:grid;grid-template-columns:65px minmax(30px,1fr) 88px;gap:8px;align-items:center;font-size:12px;color:#2c3e56}
+.ux-version-row>strong{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ux-version-row>span{text-align:right;white-space:nowrap;font-weight:650}
+.ux-version-track{height:19px;background:#f0f4fa;border-radius:3px;overflow:hidden}
+.ux-version-track>div{height:100%;background:linear-gradient(90deg,#117bed,#3197eb)}
+.ux-empty{color:#647b94;font-size:13px;line-height:1.55;margin:12px 0}
+.ux-history .ux-card-body{padding:7px 14px 12px}
+/* Somente o SVG do gráfico ocupa a largura; o ícone do título preserva 20px.
+   A regra anterior atingia TODO svg da seção e ampliava o ícone branco de ajuda. */
+.ux-history .ux-card-body > svg{display:block;width:100%;height:150px}
+.ux-chart-labels{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#57738c}
+.ux-detail-row{margin-top:15px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+.ux-detail-row>article{min-width:0;border:1px solid #cddff0;border-radius:12px;background:#fff;padding:14px;overflow:hidden}
+.ux-detail-row .section-heading{background:linear-gradient(90deg,#0866ba,#1786d5);color:#fff!important;border-radius:7px;padding:10px 12px;display:flex;align-items:center;gap:9px;min-height:43px;font-size:16px}
+.ux-detail-row .section-heading .section-icon{background:transparent!important;color:#fff!important;border:0!important;box-shadow:none!important;width:22px!important;height:22px!important}
+.ux-detail-row .section-heading .section-icon svg{width:21px!important;height:21px!important}
+.ux-detail-row .recency-grid{margin-top:14px}
+.ux-detail-row .table-wrap{max-height:250px}
+.ux-footer{display:grid;grid-template-columns:.9fr 1.1fr;gap:16px;margin-top:20px}
+.ux-footer-explanation,.ux-footer-sources{display:flex;align-items:center;gap:9px;background:#f0f7ff;border:1px solid #bdd9f7;border-radius:10px;padding:12px 14px;min-width:0;font-size:12px;color:#233f64}
+.ux-footer-explanation>svg{color:#137ac8;flex:0 0 20px}
+.ux-footer-sources{flex-wrap:wrap;justify-content:flex-start;background:#f7faff}
+.ux-footer-sources strong{display:inline-flex;align-items:center;gap:5px;color:#183e75}
+.ux-footer-sources a,.ux-footer-sources>span{display:inline-flex;padding:6px 8px;border:1px solid #d8e2f0;background:#fff;border-radius:6px;color:#1d5c96;text-decoration:none;white-space:nowrap}
+.ux-footer-sources a:hover{text-decoration:underline}
+.ux-help{position:relative;background:#eaf4ff;border:1px solid #9bc2ed;color:#1b4976;border-radius:10px;padding:14px 46px 14px 17px;margin-bottom:13px;font-size:14px;line-height:1.5}
+.ux-help p{margin:7px 0 0}.ux-help>button{position:absolute;top:7px;right:12px;border:0;background:transparent;font-size:25px;color:#1d5c92;cursor:pointer}
+@media(max-width:1350px){.ux-main .ux-dashboard-main{grid-template-columns:minmax(250px,.95fr) minmax(370px,1.25fr)}.ux-dashboard-side{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto}.ux-main .filters{gap:10px}.ux-sespa{flex-basis:120px}}
+@media(max-width:980px){.ux-main .ux-dashboard-main{grid-template-columns:1fr}.ux-dashboard-side{grid-column:auto}.ux-map{min-height:415px}.ux-detail-row,.ux-footer{grid-template-columns:1fr}.ux-main .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ux-top{padding:15px;align-items:start}.ux-brand{gap:10px}.ux-logo{height:43px;width:43px;flex-basis:43px}.ux-logo svg{width:28px;height:28px}.ux-brand h1{font-size:19px}.ux-brand p{font-size:12px}.ux-sespa{display:none}.ux-main{padding:12px}.ux-main .filters{display:grid;grid-template-columns:1fr}.ux-main .filters .filter-actions{justify-content:flex-start;flex-wrap:wrap}.ux-main .metrics{grid-template-columns:1fr 1fr;gap:8px}.ux-main .metrics article{min-height:107px;padding:11px;gap:9px}.ux-main .metrics .metric-icon{width:39px;height:39px;flex-basis:39px}.ux-main .metrics .metric-icon svg{width:23px;height:23px}.ux-main .metrics h3{font-size:12px;margin-right:12px}.ux-main .metrics strong{font-size:27px}.ux-main .metrics span:not(.metric-icon){font-size:11px}.ux-kpi-help{top:5px;right:5px}.ux-main .ux-dashboard-main,.ux-dashboard-side,.ux-detail-row,.ux-footer{grid-template-columns:1fr}.ux-dashboard-side{display:grid;grid-template-rows:auto;grid-column:auto}.ux-section-bar h2{font-size:15px}.ux-local-metric{gap:7px}.ux-local-metric strong{font-size:23px}.ux-map{min-height:335px}.ux-map-area,.ux-map-area .osm-map{min-height:335px}.ux-footer-sources a,.ux-footer-sources>span{white-space:normal}.ux-detail-row .section-heading{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.ux-unit-action{scroll-behavior:auto}}
+
+/* Lista de estabelecimentos dentro do resumo municipal.
+   O clique mantém o comportamento original de centralizar o CNES no mapa. */
+.ux-establishment-list{margin-top:11px;max-height:245px;overflow:auto;overscroll-behavior:contain;border:1px solid #d8e6f4;border-radius:8px}
+.ux-establishment-list>p{margin:12px;color:#63748b;font-size:13px}
+.ux-establishment-list>button{width:100%;min-height:56px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:9px;padding:9px 10px;border:0;border-bottom:1px solid #e5ebf4;background:#fff;color:#295581;cursor:pointer}
+.ux-establishment-list>button:last-child{border-bottom:0}
+.ux-establishment-list>button:hover,.ux-establishment-list>button.ux-establishment-current{background:#eaf4ff}
+.ux-establishment-list>button span{min-width:0;display:flex;flex-direction:column;gap:3px}
+.ux-establishment-list>button strong{font-size:12px;line-height:1.35;color:#173b63}
+.ux-establishment-list>button small{font-size:11px;color:#667e96}
+.ux-establishment-list>button svg{flex:0 0 19px}
+.ux-map-legend{display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap}
+.ux-legend-recent{background:#079c4a}
+.ux-legend-attention{background:#9bea6e}
+.ux-legend-late{background:#ffd734}
+.ux-legend-none{background:#f25d65}
+
+/* Legenda territorial sobreposta, como na composição visual aprovada. */
+.ux-map{position:relative}
+.ux-map-legend{position:absolute;right:17px;bottom:17px;z-index:6;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;max-width:245px;padding:11px 13px;background:rgba(255,255,255,.96);border:1px solid #d3e0ed;border-radius:10px;box-shadow:0 4px 16px rgba(24,60,103,.17);font-size:12px;font-weight:650}
+.ux-map-legend>span{display:flex;align-items:center;gap:7px;color:#254a70}
+.ux-map-legend .dot{flex:0 0 12px}
+@media(max-width:640px){.ux-map-legend{right:13px;bottom:13px;padding:8px 10px;gap:6px;max-width:195px;font-size:10px}}
+
+/* Ajuda flutuante: overlay não altera o fluxo do painel, fechando pelo fundo ou Esc. */
+.ux-help-overlay{
+ position:fixed;inset:0;z-index:11000;
+ display:flex;align-items:flex-start;justify-content:center;
+ padding:clamp(26px,9vh,110px) 16px 24px;
+ background:rgba(13,36,67,.34);
+ backdrop-filter:blur(2px);
+ overflow-y:auto;
+ animation:ux-help-overlay-in .18s ease-out both;
+}
+.ux-help-dialog{
+ width:min(630px,100%);max-height:calc(100dvh - 60px);overflow:auto;
+ background:white;color:#193b60;border:1px solid #b7d3ef;border-radius:13px;
+ box-shadow:0 24px 65px rgba(9,42,82,.28);
+ animation:ux-help-dialog-in .21s ease-out both;
+ outline:0;
+}
+.ux-help-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:14px 18px;color:white;background:linear-gradient(90deg,#0866ba,#1786d5);
+}
+.ux-help-heading span{display:inline-flex;align-items:center;gap:10px;font-size:17px}
+.ux-help-heading svg{width:22px;height:22px;flex:0 0 22px}
+.ux-help-heading button{
+ display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;
+ background:transparent;color:#fff;border:1px solid #ffffff80;
+ border-radius:8px;font-size:25px;line-height:1;cursor:pointer;
+}
+.ux-help-heading button:hover{background:#ffffff26}
+.ux-help-content{padding:16px 22px 7px;font-size:14px;line-height:1.6}
+.ux-help-content p{margin:0 0 13px}
+.ux-help-content strong{color:#124a7d}
+.ux-help-actions{display:flex;justify-content:flex-end;padding:12px 20px 17px;border-top:1px solid #e5ebf3}
+.ux-help-actions button{
+ padding:10px 22px;border:1px solid #086cbd;border-radius:8px;
+ background:#086cbd;color:#fff;font-size:14px;font-weight:750;cursor:pointer;
+}
+.ux-help-actions button:hover{background:#07599c}
+.ux-help-dialog button:focus-visible{outline:3px solid #70b4ff;outline-offset:2px}
+@keyframes ux-help-overlay-in{from{opacity:0}to{opacity:1}}
+@keyframes ux-help-dialog-in{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){
+ .ux-help-overlay{padding:24px 12px}
+ .ux-help-dialog{max-height:calc(100dvh - 48px)}
+ .ux-help-heading span{font-size:15px}
+ .ux-help-content{padding:14px 16px 5px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ux-help-overlay,.ux-help-dialog{animation:none;backdrop-filter:none}
+}
+
+/* Tooltip acessível do gráfico: ao aproximar o cursor, focar pelo teclado ou tocar,
+   exibe a data e quantos municípios têm sua última recepção naquele dia. */
+.ux-history-plot{position:relative;width:100%;min-width:0}
+.ux-history .ux-history-plot>svg{display:block;width:100%;height:150px;overflow:visible}
+.ux-history-plot rect[role="button"]{cursor:crosshair;outline:none}
+.ux-history-plot rect[role="button"]:focus-visible{stroke:#0f66b0;stroke-width:1.5;stroke-dasharray:3 2}
+.ux-history-tooltip{
+ position:absolute;z-index:5;transform:translate(-50%,calc(-100% - 13px));
+ min-width:140px;max-width:175px;display:flex;flex-direction:column;align-items:center;
+ gap:3px;padding:8px 11px;border-radius:8px;background:#153d6b;color:#fff;
+ border:1px solid #80b3e4;box-shadow:0 5px 16px rgba(17,48,86,.23);
+ font-size:12px;line-height:1.3;white-space:nowrap;pointer-events:none;
+ animation:ux-history-tooltip-in .14s ease-out;
+}
+.ux-history-tooltip strong{font-size:12px;font-weight:800}
+.ux-history-tooltip span{font-size:12px}
+.ux-history-tooltip::after{
+ content:"";position:absolute;left:50%;bottom:-6px;width:10px;height:10px;
+ background:#153d6b;transform:translateX(-50%) rotate(45deg);border-radius:1px;
+}
+@keyframes ux-history-tooltip-in{from{opacity:0;transform:translate(-50%,calc(-100% - 7px))}to{opacity:1;transform:translate(-50%,calc(-100% - 13px))}}
+@media(prefers-reduced-motion:reduce){.ux-history-tooltip{animation:none}}
