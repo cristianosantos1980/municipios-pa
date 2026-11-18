@@ -163,6 +163,7 @@ export default function MapaOSM({geo, rows, selectedMunicipio, unidades=[], sele
       const status=unidade.possui_transmissao?'Com recepção de dados identificada':'Sem recepção de dados identificada';
       marker.bindPopup('<strong>'+esc(unidade.estabelecimento)+'</strong><br>'+
         'CNES: '+esc(cnes)+'<br>'+status+
+        '<br>Versão PEC: '+esc(unidade.versao_pec||'Não identificada')+
         (unidade.ultima_transmissao?'<br>Última recepção de dados: '+esc(unidade.ultima_transmissao):''));
       marker.addTo(layer);
       unidadeMarkerByCnesRef.current.set(String(cnes),marker);
