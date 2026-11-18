@@ -457,7 +457,7 @@ function App(){
     <div className="ux-help-heading"><span><UiIcon name="info" size={22}/> <strong id="ux-help-title">Como interpretar o painel</strong></span><button type="button" onClick={()=>setAjudaAberta(false)} aria-label="Fechar ajuda" title="Fechar ajuda">×</button></div>
     <div className="ux-help-content">
      <p><strong>Com recepção:</strong> município com pelo menos um registro identificado na Analytics, conforme os filtros aplicados.</p>
-     <p><strong>Sem recepção:</strong> não foi encontrado registro no recorte. Isso não significa que o município nunca enviou dados.</p>
+     <p><strong>Sem recepção:</strong> significa que não foram identificados dados recepcionados e consolidados na Analytics para o município, considerando os filtros selecionados. <strong>Isso não significa necessariamente que o município deixou de enviar seus dados.</strong> Podem existir dificuldades na transmissão, no processamento, na integração ou na atualização das informações. A situação deve ser verificada antes de concluir que não houve envio.</p>
      <p><strong>Indicadores estaduais:</strong> continuam mostrando o total do Pará quando um município é selecionado. O resumo municipal e o mapa exibem o detalhamento local.</p>
      <p><strong>Últimas Recepções (30 dias):</strong> distribuição dos municípios segundo a data de sua última recepção identificada, e não o histórico completo de envios nem uma evolução acumulada.</p>
      <p><strong>Versões PEC:</strong> quantidade de CNES por versão de seu último registro identificado no recorte consultado, não um inventário de todas as instalações.</p>
