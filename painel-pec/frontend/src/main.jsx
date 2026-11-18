@@ -233,7 +233,7 @@ function UltimasRecepcoes({rows}){
  return <article className="ux-card ux-history"><PainelTitulo icone="chart" titulo="Últimas Recepções (30 dias)" ajuda="Distribuição dos últimos registros municipais por data; não é histórico de todas as transmissões ou evolução acumulada."/>
  <div className="ux-card-body"><svg viewBox="0 0 600 170" role="img" aria-label="Quantidade de municípios por data do último registro nos últimos 30 dias" preserveAspectRatio="none">
   {[35,90,145].map(y=><line key={y} x1="20" y1={y} x2="580" y2={y} stroke="#d9e4f0" strokeWidth="1"/>)}
-  <polyline points={pontos} stroke="#1d82d5" strokeWidth="3" strokeLinejoin="round" fill="none"/>
+  <polygon points={'20,145 '+pontos+' 580,145'} fill="#d9edff" opacity=".9"/><polyline points={pontos} stroke="#1d82d5" strokeWidth="3" strokeLinejoin="round" fill="none"/>
   {contagens.map((v,i)=><circle key={i} cx={20+i*(560/29)} cy={145-v/maximo*110} r="2.5" fill="#197fd1"/>)}
  </svg>
  <div className="ux-chart-labels"><span>{dias[0].slice(8,10)+'/'+dias[0].slice(5,7)}</span><span>Últimos registros municipais por dia</span><span>{dias[29].slice(8,10)+'/'+dias[29].slice(5,7)}</span></div>
