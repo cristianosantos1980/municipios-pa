@@ -415,10 +415,10 @@ function App(){
        <h3 className="ux-municipality-name">{selectedRow.municipio}</h3><p className="ux-ibge">Código IBGE: {selectedRow.ibge}</p>
        {carregandoUnidades&&<p className="ux-local-footnote">Atualizando informações das unidades de saúde...</p>}
        <div className="ux-local-metrics">
-        <div className="ux-local-metric ux-unit-blue"><UiIcon name="building" size={23}/><span>Unidades CNES<strong>{n(unidades.length)}</strong></span></div>
-        <div className="ux-local-metric ux-unit-green"><UiIcon name="mapped" size={23}/><span>Com recepção<strong>{n(unidades.filter(u=>u.possui_transmissao).length)}</strong></span></div>
-        <div className="ux-local-metric ux-unit-red"><UiIcon name="missing" size={23}/><span>Sem recepção<strong>{n(unidades.filter(u=>!u.possui_transmissao).length)}</strong></span></div>
-        <div className="ux-local-metric ux-unit-violet"><UiIcon name="coverage" size={23}/><span>Cobertura CNES<strong>{unidades.length?(unidades.filter(u=>u.possui_transmissao).length/unidades.length*100).toFixed(1).replace('.',','):'0,0'}%</strong></span></div>
+        <div className="ux-local-metric ux-unit-blue"><UiIcon name="building" size={23}/><span>Unidades CNES<strong>{carregandoUnidades||erroUnidades?'—':n(unidades.length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-green"><UiIcon name="mapped" size={23}/><span>Com recepção<strong>{carregandoUnidades||erroUnidades?'—':n(unidades.filter(u=>u.possui_transmissao).length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-red"><UiIcon name="missing" size={23}/><span>Sem recepção<strong>{carregandoUnidades||erroUnidades?'—':n(unidades.filter(u=>!u.possui_transmissao).length)}</strong></span></div>
+        <div className="ux-local-metric ux-unit-violet"><UiIcon name="coverage" size={23}/><span>Cobertura CNES<strong>{carregandoUnidades||erroUnidades?'—':unidades.length?(unidades.filter(u=>u.possui_transmissao).length/unidades.length*100).toFixed(1).replace('.',',')+'%':'Sem dados'}</strong></span></div>
        </div>
        <div className="ux-local-last"><UiIcon name="calendar" size={23}/><span>Última recepção identificada<strong>{receberDataHora(selectedRow.ultima_transmissao).data||'Não identificada'}</strong></span></div>
        <button type="button" className="ux-unit-action" onClick={()=>setMostrarEstabelecimentos(v=>!v)} aria-expanded={mostrarEstabelecimentos}>{mostrarEstabelecimentos?'Ocultar estabelecimentos':'Ver estabelecimentos do município'}</button>
