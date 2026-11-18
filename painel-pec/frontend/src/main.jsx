@@ -231,17 +231,39 @@ function DistribuicaoVersoes({dados,carregando,erro}){
  </article>;
 }
 function UltimasRecepcoes({rows}){
+ const [diaAtivo,setDiaAtivo]=useState(null);
  // A view fornece o último registro por município, NÃO uma série histórica de envios.
  const dias=Array.from({length:30},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-29+i);return dateISO(d)});
  const contagens=dias.map(d=>rows.filter(r=>r.ultima_transmissao&&String(r.ultima_transmissao).slice(0,10)===d).length);
  const maximo=Math.max(1,...contagens);
- const pontos=contagens.map((v,i)=>(20+i*(560/29))+','+(145-v/maximo*110)).join(' ');
+ const coordenadaX=i=>20+i*(560/29);
+ const coordenadaY=valor=>145-valor/maximo*110;
+ const pontos=contagens.map((valor,i)=>coordenadaX(i)+','+coordenadaY(valor)).join(' ');
+ const formatarDia=d=>d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
+ const indiceAtivo=diaAtivo!==null&&diaAtivo>=0&&diaAtivo<dias.length?diaAtivo:null;
  return <article className="ux-card ux-history"><PainelTitulo icone="chart" titulo="Últimas Recepções (30 dias)" ajuda="Distribuição dos últimos registros municipais por data; não é histórico de todas as transmissões ou evolução acumulada."/>
- <div className="ux-card-body"><svg viewBox="0 0 600 170" role="img" aria-label="Quantidade de municípios por data do último registro nos últimos 30 dias" preserveAspectRatio="none">
-  {[35,90,145].map(y=><line key={y} x1="20" y1={y} x2="580" y2={y} stroke="#d9e4f0" strokeWidth="1"/>)}
-  <polygon points={'20,145 '+pontos+' 580,145'} fill="#d9edff" opacity=".9"/><polyline points={pontos} stroke="#1d82d5" strokeWidth="3" strokeLinejoin="round" fill="none"/>
-  {contagens.map((v,i)=><circle key={i} cx={20+i*(560/29)} cy={145-v/maximo*110} r="2.5" fill="#197fd1"/>)}
- </svg>
+ <div className="ux-card-body">
+ <div className="ux-history-plot" onMouseLeave={()=>setDiaAtivo(null)}>
+  <svg viewBox="0 0 600 170" role="group" aria-label="Quantidade de municípios por data do último registro nos últimos 30 dias" preserveAspectRatio="none">
+   {[35,90,145].map(y=><line key={y} x1="20" y1={y} x2="580" y2={y} stroke="#d9e4f0" strokeWidth="1"/>)}
+   <polygon points={'20,145 '+pontos+' 580,145'} fill="#d9edff" opacity=".9"/>
+   <polyline points={pontos} stroke="#1d82d5" strokeWidth="3" strokeLinejoin="round" fill="none"/>
+   {contagens.map((valor,i)=><g key={dias[i]}>
+    <circle cx={coordenadaX(i)} cy={coordenadaY(valor)} r={indiceAtivo===i?4.5:2.5} fill="#197fd1" aria-hidden="true"/>
+    {/* Área transparente de interação amplia o alvo para mouse, teclado e toque. */}
+    <rect x={coordenadaX(i)-9} y={20} width={18} height={135} fill="transparent"
+     tabIndex={0} role="button" aria-label={formatarDia(dias[i])+': '+n(valor)+' municípios com última recepção'}
+     onMouseEnter={()=>setDiaAtivo(i)} onFocus={()=>setDiaAtivo(i)}
+     onClick={()=>setDiaAtivo(i)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setDiaAtivo(i)}if(e.key==='Escape')setDiaAtivo(null)}}/>
+   </g>)}
+  </svg>
+  {indiceAtivo!==null&&<div className="ux-history-tooltip" role="status"
+   style={{left:'clamp(76px, '+(coordenadaX(indiceAtivo)/600*100)+'%, calc(100% - 76px))',
+           top:(coordenadaY(contagens[indiceAtivo])/170*100)+'%'}}>
+    <strong>{formatarDia(dias[indiceAtivo])}</strong>
+    <span>{n(contagens[indiceAtivo])} {contagens[indiceAtivo]===1?'município':'municípios'}</span>
+  </div>}
+ </div>
  <div className="ux-chart-labels"><span>{dias[0].slice(8,10)+'/'+dias[0].slice(5,7)}</span><span>Últimos registros municipais por dia</span><span>{dias[29].slice(8,10)+'/'+dias[29].slice(5,7)}</span></div>
  </div></article>;
 }
