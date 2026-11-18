@@ -44,6 +44,7 @@ const normalizar=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCas
 function MunicipioPesquisa({rows,value,onChange}){
   const [texto,setTexto]=useState('');
   const [aberto,setAberto]=useState(false);
+  const campoRef=useRef(null);
   const selecionado=rows.find(r=>r.ibge===value);
   useEffect(()=>{if(selecionado)setTexto(selecionado.municipio)},[value,selecionado?.municipio]);
   const opcoes=useMemo(()=>{
@@ -55,8 +56,15 @@ function MunicipioPesquisa({rows,value,onChange}){
     setTexto(registro?.municipio||'');
     setAberto(false);
   };
+  const limparSelecao=()=>{
+    // Limpa somente o município e reabre as 144 opções para nova seleção.
+    onChange('');
+    setTexto('');
+    setAberto(true);
+    campoRef.current?.focus();
+  };
   return <div className="municipio-picker">
-    <input type="text" autoComplete="off" aria-label="Pesquisar município"
+    <input ref={campoRef} type="text" autoComplete="off" aria-label="Pesquisar município"
       role="combobox" aria-autocomplete="list" aria-expanded={aberto}
       aria-controls="municipios-opcoes" value={texto}
       placeholder="Pesquisar município..."
@@ -67,7 +75,7 @@ function MunicipioPesquisa({rows,value,onChange}){
         if(e.key==='Escape'){setAberto(false);setTexto(selecionado?.municipio||'')}
         if(e.key==='Enter'&&aberto&&opcoes.length){e.preventDefault();escolher(opcoes[0])}
       }}/>
-    {(texto||value)&&<button className="municipio-clear" type="button" aria-label="Limpar município" onMouseDown={e=>e.preventDefault()} onClick={()=>escolher(null)}>×</button>}
+    {(texto||value)&&<button className="municipio-clear" type="button" aria-label="Limpar município" title="Limpar município e escolher outro" onMouseDown={e=>e.preventDefault()} onClick={limparSelecao}>×</button>}
     {aberto&&<div className="municipio-options" id="municipios-opcoes" role="listbox">
       <button type="button" role="option" aria-selected={!value}
         onMouseDown={e=>{e.preventDefault();escolher(null)}}>Todos os municípios</button>
@@ -80,6 +88,7 @@ function MunicipioPesquisa({rows,value,onChange}){
 }
 function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}){
  const [texto,setTexto]=useState(''),[aberto,setAberto]=useState(false),[busca,setBusca]=useState([]),[buscando,setBuscando]=useState(false),[erroBusca,setErroBusca]=useState(''),[buscaDigitada,setBuscaDigitada]=useState(false);
+ const campoRef=useRef(null);
  const local=useMemo(()=>{const termo=normalizar(texto.trim());return termo?unidades.filter(u=>normalizar(u.estabelecimento+' '+u.cnes).includes(termo)):unidades},[unidades,texto]);
  useEffect(()=>{
    if(!buscaDigitada||!aberto||texto.trim().length<3){setBusca([]);setBuscando(false);setErroBusca('');return}
@@ -107,14 +116,21 @@ function UnidadePesquisa({municipio,unidades,value,onSelecionar,carregando,erro}
    setAberto(!selecionada&&Boolean(municipio));
    onSelecionar(selecionada);
  };
+ const limparSelecao=()=>{
+   // Reabre a lista vinculada ao município sem apagar os demais filtros.
+   setTexto('');setBuscaDigitada(false);setBusca([]);setErroBusca('');setBuscando(false);
+   onSelecionar(null);
+   setAberto(true);
+   campoRef.current?.focus();
+ };
  const opcoes=buscaDigitada?busca:(municipio?local:[]);
  return <div className="municipio-picker unidade-picker">
-  <input type="text" autoComplete="off" role="combobox" aria-autocomplete="list"
+  <input ref={campoRef} type="text" autoComplete="off" role="combobox" aria-autocomplete="list"
     aria-expanded={aberto} aria-controls="unidades-opcoes" aria-label="Pesquisar unidade de saúde"
     value={texto} placeholder="Nome da unidade ou CNES..." onFocus={()=>{setAberto(true);if(!value&&!texto.trim()){setBuscaDigitada(false);setBusca([]);setErroBusca('')}}}
     onBlur={()=>setAberto(false)} onChange={e=>{setTexto(e.target.value);setBuscaDigitada(true);setAberto(true)}}
     onKeyDown={e=>{if(e.key==='Escape')setAberto(false);if(e.key==='Enter'&&aberto&&opcoes.length){e.preventDefault();escolher(opcoes[0])}}}/>
-  {(texto||value)&&<button type="button" className="municipio-clear" aria-label="Limpar unidade" onMouseDown={e=>e.preventDefault()} onClick={()=>escolher(null)}>×</button>}
+  {(texto||value)&&<button type="button" className="municipio-clear" aria-label="Limpar unidade" title="Limpar unidade e escolher outra" onMouseDown={e=>e.preventDefault()} onClick={limparSelecao}>×</button>}
   {aberto&&<div className="municipio-options" id="unidades-opcoes" role="listbox">
     {!municipio&&(!buscaDigitada||texto.trim().length<3)&&<div className="municipio-empty">Digite ao menos 3 caracteres para buscar em todo o Pará.</div>}
     {municipio&&!buscaDigitada&&carregando&&<div className="municipio-empty">Carregando unidades...</div>}
